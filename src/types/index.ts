@@ -1,22 +1,19 @@
-// ===== Blog Post =====
-export interface BlogPost {
+export interface Article {
   id: number
   slug: string
   title: string
   excerpt: string
   content: string
-  coverImage: string
+  cover: string
   category: string
   tags: string[]
-  publishedAt: string
-  readingTime: number
+  createdAt: string
+  readTime: number
   wordCount: number
-  viewCount: number
+  views: number
   featured: boolean
-  reactions: Record<string, number>
 }
 
-// ===== Friend Link =====
 export interface FriendLink {
   id: number
   name: string
@@ -26,19 +23,25 @@ export interface FriendLink {
   category: string
 }
 
-// ===== Product =====
 export interface Product {
   id: number
   name: string
   description: string
-  price: string
+  price: number
   image: string
   link: string
   category: string
   recommended: boolean
 }
 
-// ===== Guestbook Entry =====
+export interface Music {
+  id: number
+  title: string
+  artist: string
+  url: string
+  cover: string
+}
+
 export interface GuestbookEntry {
   id: number
   nickname: string
@@ -50,7 +53,6 @@ export interface GuestbookEntry {
   replies: GuestbookEntry[]
 }
 
-// ===== Collection Item =====
 export interface CollectionItem {
   id: number
   type: 'book' | 'movie' | 'game'
@@ -63,7 +65,6 @@ export interface CollectionItem {
   completedAt?: string
 }
 
-// ===== Now Status =====
 export interface NowStatus {
   id: number
   category: string
@@ -72,8 +73,7 @@ export interface NowStatus {
   updatedAt: string
 }
 
-// ===== Footprint =====
-export interface Footprint {
+export interface FootprintItem {
   id: number
   place: string
   lat: number
@@ -83,7 +83,6 @@ export interface Footprint {
   photo?: string
 }
 
-// ===== Badge =====
 export interface Badge {
   id: number
   name: string
@@ -94,7 +93,6 @@ export interface Badge {
   earnedAt?: string
 }
 
-// ===== Changelog Entry =====
 export interface ChangelogEntry {
   id: number
   date: string
@@ -103,59 +101,22 @@ export interface ChangelogEntry {
   type: 'feature' | 'fix' | 'optimize' | 'theme'
 }
 
-// ===== Timeline Item =====
 export interface TimelineItem {
   id: number
   date: string
   title: string
-  description: string
+  content: string
   type: 'article' | 'photo' | 'collection' | 'life' | 'project'
-  link?: string
 }
 
-// ===== Music Track =====
-export interface MusicTrack {
-  id: number
-  title: string
-  artist: string
-  url: string
-  cover: string
-}
-
-// ===== Category =====
-export interface Category {
-  id: string
-  name: string
-  icon: string
-  color: string
-}
-
-// ===== Site Config =====
 export interface SiteConfig {
   siteName: string
   siteDescription: string
-  author: {
-    name: string
-    avatar: string
-    bio: string
-    social: {
-      github?: string
-      twitter?: string
-      email?: string
-      bilibili?: string
-    }
-  }
-  announcement: string
+  avatar: string
+  nickname: string
+  tagline: string
+  socialLinks: { name: string; url: string; icon: string }[]
+  announcements: string[]
   siteStartDate: string
-  musicEnabled: boolean
   shopEnabled: boolean
-  clickEffectEnabled: boolean
-}
-
-// ===== Reader Location =====
-export interface ReaderLocation {
-  city: string
-  count: number
-  lat: number
-  lng: number
 }

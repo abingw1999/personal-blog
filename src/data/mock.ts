@@ -1,341 +1,112 @@
-import type {
-  BlogPost, FriendLink, Product, GuestbookEntry, CollectionItem,
-  NowStatus, Footprint, Badge, ChangelogEntry, TimelineItem,
-  MusicTrack, Category, SiteConfig, ReaderLocation
-} from '@/types'
+import type { Article, FriendLink, Product, Music, GuestbookEntry, CollectionItem, NowStatus, FootprintItem, Badge, ChangelogEntry, TimelineItem, SiteConfig } from '@/types'
 
 export const siteConfig: SiteConfig = {
   siteName: '小橘子的日常',
   siteDescription: '记录生活中的小确幸，分享有趣的知识与故事',
-  author: {
-    name: '小橘子',
-    avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=orange&backgroundColor=ffdfbf&size=200',
-    bio: '一个热爱生活的普通人，喜欢游戏、阅读和探索世界',
-    social: {
-      github: 'https://github.com',
-      twitter: 'https://twitter.com',
-      email: 'hello@example.com',
-      bilibili: 'https://bilibili.com'
-    }
-  },
-  announcement: '欢迎来到我的小天地！这里记录着我的日常和感悟，希望你能喜欢~',
+  avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=orange&backgroundColor=ffdfbf',
+  nickname: '小橘子',
+  tagline: '生活就像一盒巧克力，你永远不知道下一颗是什么味道 🍊',
+  socialLinks: [
+    { name: 'GitHub', url: 'https://github.com', icon: '🐙' },
+    { name: 'Twitter', url: 'https://twitter.com', icon: '🐦' },
+    { name: 'Email', url: 'mailto:hello@example.com', icon: '📧' }
+  ],
+  announcements: ['🎉 网站全新上线啦！', '📝 正在学习 Vue3，记录学习笔记'],
   siteStartDate: '2024-01-01',
-  musicEnabled: true,
-  shopEnabled: false,
-  clickEffectEnabled: true
+  shopEnabled: false
 }
 
-export const categories: Category[] = [
-  { id: 'life', name: '生活', icon: '🌿', color: '#7FB685' },
-  { id: 'gaming', name: '游戏', icon: '🎮', color: '#E8735A' },
-  { id: 'knowledge', name: '知识', icon: '📚', color: '#5B8DEF' },
-  { id: 'tech', name: '技术', icon: '💻', color: '#9B59B6' },
-  { id: 'travel', name: '旅行', icon: '✈️', color: '#F5A623' },
-  { id: 'food', name: '美食', icon: '🍜', color: '#E74C3C' }
-]
-
-export const blogPosts: BlogPost[] = [
-  {
-    id: 1,
-    slug: 'spring-day',
-    title: '春日里的一场小散步',
-    excerpt: '阳光正好，微风不燥，决定出门走走。路边的樱花开得正盛，空气里都是甜甜的味道...',
-    content: `## 春天的味道
-
-阳光正好，微风不燥，决定出门走走。
-
-路边的樱花开得正盛，空气里都是甜甜的味道。公园里有很多人在放风筝，小孩子们跑来跑去，笑声清脆。
-
-### 路上的发现
-
-- 一棵开满花的老树
-- 一只慵懒的橘猫
-- 一对牵手散步的老夫妻
-
-> 生活的美好，往往藏在这些不经意的瞬间里。
-
-有时候觉得，幸福不是什么惊天动地的大事，而是这些平凡日子里的小确幸。
-
-\`\`\`
-今天的心情：☀️ 晴朗
-步数：8,234 步
-拍照：12 张
-\`\`\`
-
-下次还要来这片樱花林！`,
-    coverImage: 'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&h=400&fit=crop',
-    category: 'life',
-    tags: ['春天', '散步', '日常'],
-    publishedAt: '2024-03-15',
-    readingTime: 3,
-    wordCount: 450,
-    viewCount: 1234,
-    featured: true,
-    reactions: { '❤️': 23, '🔥': 8, '😂': 2, '😮': 1, '👍': 15 }
-  },
-  {
-    id: 2,
-    slug: 'game-review-zelda',
-    title: '《塞尔达传说》200小时通关感想',
-    excerpt: '终于把海拉鲁大陆探索了个遍，这篇文章来聊聊我的游戏体验和感悟...',
-    content: `## 海拉鲁之旅
-
-经过了200多个小时的冒险，我终于把《塞尔达传说：王国之泪》通关了。
-
-### 最喜欢的瞬间
-
-1. 第一次飞上天空的那一刻
-2. 发现隐藏神庙的惊喜
-3. 用奇葩载具打败Boss的成就感
-
-### 游戏给我的启发
-
-这个游戏教会我：**遇到问题不一定要按套路来**，有时候跳出框架思考，反而能找到更有趣的解决方案。
-
-> 游戏不只是娱乐，也是一种学习方式。`,
-    coverImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&h=400&fit=crop',
-    category: 'gaming',
-    tags: ['塞尔达', '游戏评测', '任天堂'],
-    publishedAt: '2024-03-10',
-    readingTime: 8,
-    wordCount: 1800,
-    viewCount: 2567,
-    featured: true,
-    reactions: { '❤️': 45, '🔥': 32, '😂': 5, '😮': 12, '👍': 28 }
-  },
-  {
-    id: 3,
-    slug: 'coffee-guide',
-    title: '手冲咖啡入门指南：从选豆到冲泡',
-    excerpt: '作为一个曾经的速溶咖啡党，我是如何一步步走进手冲咖啡的世界的...',
-    content: `## 我的咖啡之旅
-
-作为一个曾经的速溶咖啡党，我是如何一步步走进手冲咖啡的世界的。
-
-### 入门装备
-
-- 手摇磨豆机
-- V60 滤杯
-- 细口壶
-- 电子秤
-
-### 冲泡要点
-
-1. 水温：90-96度
-2. 粉水比：1:15
-3. 研磨度：中细
-
-> 好咖啡不需要多贵的设备，用心就好。`,
-    coverImage: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=400&fit=crop',
-    category: 'knowledge',
-    tags: ['咖啡', '手冲', '生活技能'],
-    publishedAt: '2024-03-05',
-    readingTime: 6,
-    wordCount: 1200,
-    viewCount: 890,
-    featured: false,
-    reactions: { '❤️': 18, '🔥': 5, '😂': 1, '😮': 3, '👍': 12 }
-  },
-  {
-    id: 4,
-    slug: 'weekend-cooking',
-    title: '周末厨房实验：自制日式拉面',
-    excerpt: '花了整整一个下午，从熬汤底到做叉烧，终于还原了记忆中那碗拉面的味道...',
-    content: `## 自制拉面记录
-
-花了整整一个下午，从熬汤底到做叉烧，终于还原了记忆中那碗拉面的味道。
-
-### 材料清单
-
-- 猪骨 1kg
-- 酱油、味醂、清酒
-- 溏心蛋
-- 葱花、海苔、笋干
-
-### 步骤
-
-1. 猪骨焯水后大火熬煮4小时
-2. 叉烧用酱油味醂腌制后慢炖
-3. 溏心蛋煮6分半钟，冰水浸泡
-
-> 做饭的过程本身就是一种治愈。`,
-    coverImage: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&h=400&fit=crop',
-    category: 'food',
-    tags: ['料理', '拉面', '周末'],
-    publishedAt: '2024-02-28',
-    readingTime: 5,
-    wordCount: 980,
-    viewCount: 654,
-    featured: false,
-    reactions: { '❤️': 31, '🔥': 15, '😂': 3, '😮': 8, '👍': 22 }
-  },
-  {
-    id: 5,
-    slug: 'book-review-atomic-habits',
-    title: '读书笔记：《原子习惯》的4个定律',
-    excerpt: '这本书改变了我对习惯养成的认知，微小的改变能带来巨大的差异...',
-    content: `## 原子习惯
-
-这本书改变了我对习惯养成的认知。
-
-### 四个定律
-
-1. **让它显而易见** - 把想做的事放在显眼的地方
-2. **让它有吸引力** - 把想做的事和喜欢的事绑定
-3. **让它简便易行** - 从两分钟版本开始
-4. **让它令人愉悦** - 给自己即时奖励
-
-### 我的实践
-
-- 每天早上先喝一杯水（定律1）
-- 边听播客边跑步（定律2）
-- 每天只读一页书（定律3）
-- 在日历上打勾（定律4）
-
-> 不要追求一次巨大的改变，而是每天进步1%。`,
-    coverImage: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&h=400&fit=crop',
-    category: 'knowledge',
-    tags: ['读书', '习惯', '自我提升'],
-    publishedAt: '2024-02-20',
-    readingTime: 7,
-    wordCount: 1500,
-    viewCount: 1876,
-    featured: true,
-    reactions: { '❤️': 56, '🔥': 28, '😂': 2, '😮': 4, '👍': 41 }
-  },
-  {
-    id: 6,
-    slug: 'kyoto-travel',
-    title: '京都五日慢游记：寺庙、和服与抹茶',
-    excerpt: '在京都的五天里，我走过了无数寺庙，穿上了和服，喝遍了各种抹茶...',
-    content: `## 京都慢游
-
-在京都的五天里，我走过了无数寺庙，穿上了和服，喝遍了各种抹茶。
-
-### 行程亮点
-
-- Day 1: 伏见稻荷大社的千本鸟居
-- Day 2: 岚山竹林与天龙寺
-- Day 3: 祇园花见小路
-- Day 4: 金阁寺与龙安寺
-- Day 5: 清水寺与二年坂
-
-> 旅行不是打卡，而是感受。`,
-    coverImage: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&h=400&fit=crop',
-    category: 'travel',
-    tags: ['日本', '京都', '旅行'],
-    publishedAt: '2024-02-15',
-    readingTime: 10,
-    wordCount: 2200,
-    viewCount: 3421,
-    featured: true,
-    reactions: { '❤️': 78, '🔥': 45, '😂': 3, '😮': 15, '👍': 52 }
-  }
+export const articles: Article[] = [
+  { id: 1, slug: 'my-first-post', title: '你好，世界！我的第一篇博客', excerpt: '这是我的第一篇博客文章，记录一下建站的心路历程...', content: '# 你好，世界！\n\n这是我的第一篇博客文章。\n\n## 为什么写博客\n\n记录生活，分享知识。\n\n## 未来计划\n\n- 每周至少更新一篇\n- 分享技术学习笔记\n- 记录生活趣事', cover: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800', category: '生活', tags: ['随笔', '开始'], createdAt: '2024-03-15', readTime: 3, wordCount: 520, views: 128, featured: true },
+  { id: 2, slug: 'vue3-learning-notes', title: 'Vue3 学习笔记：Composition API 入门', excerpt: '最近在学习 Vue3，记录一下 Composition API 的使用心得...', content: '# Vue3 Composition API\n\n## 什么是 Composition API\n\nVue3 新增的一种组织组件逻辑的方式。\n\n## setup 函数\n\n```typescript\nimport { ref } from "vue"\nconst count = ref(0)\n```\n\n## 响应式数据\n\n使用 `ref` 和 `reactive` 创建响应式数据。', cover: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800', category: '知识', tags: ['Vue3', '前端', '学习'], createdAt: '2024-03-20', readTime: 8, wordCount: 1500, views: 256, featured: true },
+  { id: 3, slug: 'indie-game-recommendations', title: '2024 年值得玩的独立游戏推荐', excerpt: '整理了一些今年值得一玩的独立游戏，每一款都让人印象深刻...', content: '# 独立游戏推荐\n\n## Celeste\n\n一款关于攀登的像素游戏，剧情感人。\n\n## Hollow Knight\n\n银河恶魔城类游戏的巅峰之作。\n\n## Stardew Valley\n\n休闲农场模拟，治愈系首选。', cover: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800', category: '游戏', tags: ['独立游戏', '推荐'], createdAt: '2024-04-01', readTime: 6, wordCount: 1100, views: 342, featured: true },
+  { id: 4, slug: 'cooking-tips', title: '厨房小白也能学会的 10 道菜', excerpt: '分享一些简单又好吃的家常菜做法，新手也能轻松上手...', content: '# 简单家常菜\n\n## 番茄炒蛋\n\n最经典的家常菜，简单又好吃。\n\n## 蒜蓉西兰花\n\n健康又美味。\n\n## 可乐鸡翅\n\n小朋友最爱的菜。', cover: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800', category: '生活', tags: ['美食', '教程'], createdAt: '2024-04-10', readTime: 5, wordCount: 900, views: 189, featured: false },
+  { id: 5, slug: 'typescript-tips', title: 'TypeScript 实用技巧分享', excerpt: '一些日常开发中常用的 TypeScript 技巧，提升代码质量...', content: '# TypeScript 技巧\n\n## 类型守卫\n\n```typescript\nfunction isString(val: unknown): val is string {\n  return typeof val === "string"\n}\n```\n\n## 工具类型\n\n`Partial`、`Required`、`Pick`、`Omit` 等。', cover: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800', category: '知识', tags: ['TypeScript', '前端'], createdAt: '2024-04-15', readTime: 7, wordCount: 1300, views: 278, featured: false },
+  { id: 6, slug: 'travel-diary', title: '周末短途旅行记录', excerpt: '记录上周末的一次短途旅行，去了一个安静的小镇...', content: '# 周末旅行\n\n## 目的地\n\n一个安静的江南小镇。\n\n## 行程安排\n\n- 周六早上出发\n- 下午逛古镇\n- 晚上住民宿\n- 周日返程', cover: 'https://images.unsplash.com/photo-1469854523086-cc02fe4d58a2?w=800', category: '生活', tags: ['旅行', '周末'], createdAt: '2024-04-20', readTime: 4, wordCount: 750, views: 156, featured: false },
+  { id: 7, slug: 'reading-list-2024', title: '2024 年阅读清单', excerpt: '今年计划读的书籍清单，涵盖技术、文学、心理学等领域...', content: '# 2024 阅读清单\n\n## 技术类\n\n- 《Vue.js 设计与实现》\n- 《深入理解 TypeScript》\n\n## 文学类\n\n- 《百年孤独》\n- 《活着》\n\n## 心理学\n\n- 《思考，快与慢》', cover: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800', category: '知识', tags: ['阅读', '书单'], createdAt: '2024-05-01', readTime: 4, wordCount: 680, views: 203, featured: false },
+  { id: 8, slug: 'productivity-tools', title: '我的效率工具箱', excerpt: '分享一些我日常使用的效率工具，帮助你提升工作和学习效率...', content: '# 效率工具\n\n## 笔记\n\n- Obsidian：本地知识库\n- Notion：项目管理\n\n## 时间管理\n\n- Toggl：时间追踪\n- Forest：专注森林\n\n## 开发工具\n\n- VS Code：编辑器\n- Warp：终端', cover: 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=800', category: '知识', tags: ['工具', '效率'], createdAt: '2024-05-10', readTime: 5, wordCount: 950, views: 312, featured: false }
 ]
 
 export const friendLinks: FriendLink[] = [
-  { id: 1, name: '樱花博客', url: 'https://example.com/sakura', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=sakura&backgroundColor=ffb6c1', description: '记录生活中的美好瞬间', category: '朋友的博客' },
-  { id: 2, name: '代码日记', url: 'https://example.com/code', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=code&backgroundColor=87ceeb', description: '一个程序员的日常', category: '朋友的博客' },
-  { id: 3, name: '美食地图', url: 'https://example.com/food', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=food&backgroundColor=ffd700', description: '探索世界各地的美食', category: '推荐网站' },
-  { id: 4, name: '旅行日志', url: 'https://example.com/travel', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=travel&backgroundColor=98fb98', description: '用脚步丈量世界', category: '推荐网站' },
-  { id: 5, name: '摄影天地', url: 'https://example.com/photo', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=photo&backgroundColor=dda0dd', description: '用镜头捕捉光影', category: '朋友的博客' }
+  { id: 1, name: '小明技术博客', url: 'https://example.com/xiaoming', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=xiaoming', description: '专注前端开发，分享技术心得', category: '技术博客' },
+  { id: 2, name: '旅行日记', url: 'https://example.com/travel', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=travel', description: '用镜头记录世界的美好', category: '生活分享' },
+  { id: 3, name: '游戏时光', url: 'https://example.com/gaming', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=gaming', description: '游戏评测与推荐', category: '游戏' },
+  { id: 4, name: '设计灵感', url: 'https://example.com/design', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=design', description: 'UI/UX 设计资源分享', category: '推荐网站' },
+  { id: 5, name: '读书笔记', url: 'https://example.com/reading', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=reading', description: '每年读 100 本书的读书达人', category: '生活分享' }
 ]
 
 export const products: Product[] = [
-  { id: 1, name: '复古胶片相机', description: '记录生活的每一刻', price: '¥299', image: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=300&h=300&fit=crop', link: 'https://example.com', category: '数码', recommended: true },
-  { id: 2, name: '手冲咖啡套装', description: '在家也能做出咖啡店的味道', price: '¥168', image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=300&h=300&fit=crop', link: 'https://example.com', category: '生活', recommended: true },
-  { id: 3, name: '日式陶瓷杯', description: '手工制作的温暖质感', price: '¥89', image: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=300&h=300&fit=crop', link: 'https://example.com', category: '生活', recommended: false }
+  { id: 1, name: '机械键盘', description: 'Cherry 红轴，打字超舒服', price: 399, image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400', link: 'https://taobao.com', category: '数码', recommended: true },
+  { id: 2, name: '《Vue.js 设计与实现》', description: '霍春阳力作，深入理解 Vue3', price: 99, image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400', link: 'https://jd.com', category: '书籍', recommended: true },
+  { id: 3, name: '桌面收纳架', description: '让桌面更整洁', price: 59, image: 'https://images.unsplash.com/photo-1586023492125-27b2c4b743d0?w=400', link: 'https://taobao.com', category: '生活', recommended: false }
+]
+
+export const musicList: Music[] = [
+  { id: 1, title: 'A Little Story', artist: 'Valentin', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', cover: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100' },
+  { id: 2, title: 'Spring In My Step', artist: 'Silent Partner', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', cover: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=100' },
+  { id: 3, title: 'Afternoon Tea', artist: 'Chris Haugen', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', cover: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=100' }
 ]
 
 export const guestbookEntries: GuestbookEntry[] = [
-  {
-    id: 1, nickname: '小明', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=ming', content: '很喜欢你的博客风格，温暖又有设计感！', emoji: '❤️', createdAt: '2024-03-15 14:30', parentId: null,
-    replies: [
-      { id: 11, nickname: '小橘子', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=orange', content: '谢谢你的喜欢！会继续努力的~', emoji: '😊', createdAt: '2024-03-15 15:00', parentId: 1, replies: [] }
-    ]
-  },
-  {
-    id: 2, nickname: '旅行者', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=traveler', content: '京都那篇游记写得太好了，已经加入我的旅行清单！', emoji: '✈️', createdAt: '2024-03-14 10:20', parentId: null, replies: []
-  },
-  {
-    id: 3, nickname: '游戏迷', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=gamer', content: '塞尔达那篇文章说到我心坎里了，200小时不是白玩的！', emoji: '🎮', createdAt: '2024-03-13 20:15', parentId: null, replies: []
-  }
+  { id: 1, nickname: '小明', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=ming', content: '网站做得真好看！🎉', emoji: '❤️', createdAt: '2024-05-15 10:30', parentId: null, replies: [
+    { id: 101, nickname: '小橘子', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=orange', content: '谢谢支持！😊', emoji: '', createdAt: '2024-05-15 11:00', parentId: 1, replies: [] }
+  ]},
+  { id: 2, nickname: '旅行者', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=traveler', content: '很喜欢你的旅行文章，期待更多更新！', emoji: '🔥', createdAt: '2024-05-14 15:20', parentId: null, replies: [] },
+  { id: 3, nickname: '代码侠', avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=coder', content: 'Vue3 写得不错，学到了 👍', emoji: '👍', createdAt: '2024-05-13 09:15', parentId: null, replies: [] }
 ]
 
 export const collections: CollectionItem[] = [
-  { id: 1, type: 'book', title: '原子习惯', cover: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=200&h=280&fit=crop', rating: 9, status: '已读', comment: '改变了我对习惯养成的认知', link: 'https://book.douban.com', completedAt: '2024-02' },
-  { id: 2, type: 'book', title: '百年孤独', cover: 'https://images.unsplash.com/photo-1543002588-bfa73341bf51?w=200&h=280&fit=crop', rating: 8, status: '已读', comment: '魔幻现实主义的巅峰之作', completedAt: '2024-01' },
-  { id: 3, type: 'movie', title: '千与千寻', cover: 'https://images.unsplash.com/photo-1518930259200-3e5b29f2ea24?w=200&h=280&fit=crop', rating: 10, status: '已看', comment: '每次看都有新的感悟', link: 'https://douban.com' },
-  { id: 4, type: 'game', title: '塞尔达传说：王国之泪', cover: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200&h=280&fit=crop', rating: 10, status: '已通关', comment: '200小时的冒险，值得每一分钟', completedAt: '2024-03' },
-  { id: 5, type: 'game', title: '星之卡比：探索发现', cover: 'https://images.unsplash.com/photo-1585620385456-4a0a5e06c8e2?w=200&h=280&fit=crop', rating: 8, status: '已通关', comment: '可爱又治愈的游戏' },
-  { id: 6, type: 'book', title: '人类简史', cover: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=200&h=280&fit=crop', rating: 7, status: '在读', comment: '正在阅读中...' }
+  { id: 1, type: 'book', title: '百年孤独', cover: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300', rating: 5, status: '已读', comment: '魔幻现实主义的巅峰之作', link: 'https://book.douban.com', completedAt: '2024-02' },
+  { id: 2, type: 'book', title: '活着', cover: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=300', rating: 5, status: '已读', comment: '余华最震撼人心的作品', completedAt: '2024-01' },
+  { id: 3, type: 'movie', title: '千与千寻', cover: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=300', rating: 5, status: '已看', comment: '宫崎骏的奇幻世界', link: 'https://bilibili.com' },
+  { id: 4, type: 'movie', title: '星际穿越', cover: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=300', rating: 4, status: '已看', comment: '诺兰的科幻巨作' },
+  { id: 5, type: 'game', title: 'Celeste', cover: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=300', rating: 5, status: '已通关', comment: '关于攀登与自我超越' },
+  { id: 6, type: 'game', title: 'Hollow Knight', cover: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=300', rating: 5, status: '已通关', comment: '银河恶魔城类游戏的巅峰' }
 ]
 
 export const nowStatuses: NowStatus[] = [
-  { id: 1, category: '在读', icon: '📖', content: '《被讨厌的勇气》', updatedAt: '2024-03-15' },
-  { id: 2, category: '在玩', icon: '🎮', content: '《博德之门3》', updatedAt: '2024-03-15' },
-  { id: 3, category: '在学', icon: '🎨', content: '水彩画基础', updatedAt: '2024-03-14' },
-  { id: 4, category: '在追', icon: '📺', content: '《葬送的芙莉莲》', updatedAt: '2024-03-15' },
-  { id: 5, category: '在思考', icon: '💭', content: '如何更好地平衡工作与生活', updatedAt: '2024-03-13' }
+  { id: 1, category: '在读', icon: '📖', content: '《深入理解 TypeScript》', updatedAt: '2024-05-20' },
+  { id: 2, category: '在玩', icon: '🎮', content: '塞尔达传说：王国之泪', updatedAt: '2024-05-18' },
+  { id: 3, category: '在学', icon: '🧠', content: 'Rust 编程语言', updatedAt: '2024-05-15' },
+  { id: 4, category: '在追', icon: '📺', content: '《庆余年 第二季》', updatedAt: '2024-05-20' },
+  { id: 5, category: '在思考', icon: '💭', content: '如何保持工作与生活的平衡', updatedAt: '2024-05-19' }
 ]
 
-export const footprints: Footprint[] = [
-  { id: 1, place: '北京', lat: 39.9, lng: 116.4, date: '2023-10', description: '故宫、长城、胡同' },
-  { id: 2, place: '上海', lat: 31.2, lng: 121.5, date: '2023-08', description: '外滩、迪士尼、城隍庙' },
-  { id: 3, place: '成都', lat: 30.6, lng: 104.1, date: '2023-07', description: '火锅、熊猫基地、宽窄巷子' },
-  { id: 4, place: '京都', lat: 35.0, lng: 135.8, date: '2024-02', description: '寺庙、和服体验、抹茶' },
-  { id: 5, place: '大理', lat: 25.7, lng: 100.2, date: '2023-12', description: '洱海、古城、苍山' }
+export const footprints: FootprintItem[] = [
+  { id: 1, place: '北京', lat: 39.9, lng: 116.4, date: '2023-10', description: '第一次去北京，爬了长城' },
+  { id: 2, place: '上海', lat: 31.2, lng: 121.5, date: '2024-01', description: '在外滩看夜景' },
+  { id: 3, place: '杭州', lat: 30.3, lng: 120.2, date: '2024-03', description: '西湖骑行，断桥残雪' },
+  { id: 4, place: '成都', lat: 30.6, lng: 104.1, date: '2024-04', description: '吃火锅，看熊猫' }
 ]
 
 export const badges: Badge[] = [
-  { id: 1, name: '初次见面', icon: '👋', description: '第一次访问网站', condition: '访问首页', earned: true, earnedAt: '2024-01-01' },
-  { id: 2, name: '话痨达人', icon: '💬', description: '在留言板留下第一条留言', condition: '发表留言', earned: true, earnedAt: '2024-01-15' },
-  { id: 3, name: '阅读者', icon: '📖', description: '阅读5篇文章', condition: '阅读5篇文章', earned: true, earnedAt: '2024-02-01' },
-  { id: 4, name: '铁杆粉丝', icon: '❤️', description: '给文章点赞10次', condition: '点赞10次', earned: false },
-  { id: 5, name: '社交达人', icon: '🌟', description: '分享文章到社交平台', condition: '分享文章', earned: false },
-  { id: 6, name: '夜猫子', icon: '🦉', description: '在凌晨0-5点访问网站', condition: '凌晨访问', earned: true, earnedAt: '2024-03-01' },
-  { id: 7, name: '探索者', icon: '🗺️', description: '访问网站所有页面', condition: '访问所有页面', earned: false },
-  { id: 8, name: '收藏家', icon: '🏆', description: '收藏5篇文章', condition: '收藏5篇', earned: false },
-  { id: 9, name: '连续签到', icon: '📅', description: '连续7天访问网站', condition: '连续7天', earned: false },
-  { id: 10, name: '评论达人', icon: '💭', description: '发表10条评论', condition: '评论10次', earned: false },
-  { id: 11, name: '早起鸟儿', icon: '🌅', description: '在早上6-8点访问网站', condition: '早起访问', earned: true, earnedAt: '2024-02-15' },
-  { id: 12, name: '音乐爱好者', icon: '🎵', description: '播放音乐10次', condition: '播放10次', earned: false }
+  { id: 1, name: '初来乍到', icon: '🌱', description: '首次访问网站', condition: '访问网站', earned: true, earnedAt: '2024-05-01' },
+  { id: 2, name: '话痨达人', icon: '💬', description: '首次留言', condition: '发表第一条留言', earned: true, earnedAt: '2024-05-02' },
+  { id: 3, name: '阅读者', icon: '📖', description: '阅读 10 篇文章', condition: '阅读 10 篇文章', earned: false },
+  { id: 4, name: '社交达人', icon: '🤝', description: '留言被回复 5 次', condition: '留言被回复 5 次', earned: false },
+  { id: 5, name: '铁杆粉丝', icon: '⭐', description: '连续访问 7 天', condition: '连续访问 7 天', earned: false },
+  { id: 6, name: '收藏家', icon: '🏆', description: '点赞 20 次', condition: '点赞 20 次', earned: false },
+  { id: 7, name: '夜猫子', icon: '🦉', description: '凌晨访问网站', condition: '凌晨 0-5 点访问', earned: true, earnedAt: '2024-05-03' },
+  { id: 8, name: '分享者', icon: '📤', description: '分享文章到社交平台', condition: '分享文章', earned: false },
+  { id: 9, name: '探索者', icon: '🗺️', description: '访问所有页面', condition: '访问所有页面', earned: false },
+  { id: 10, name: '评论达人', icon: '💡', description: '发表 10 条留言', condition: '发表 10 条留言', earned: false },
+  { id: 11, name: '早起鸟', icon: '🐦', description: '早上 6-8 点访问', condition: '早上 6-8 点访问', earned: false },
+  { id: 12, name: '忠实读者', icon: '📚', description: '阅读 50 篇文章', condition: '阅读 50 篇文章', earned: false }
 ]
 
-export const changelogEntries: ChangelogEntry[] = [
-  { id: 1, date: '2024-03-15', title: '新增音乐播放器', content: '添加了全站悬浮音乐播放器，支持播放列表、音量控制等功能', type: 'feature' },
-  { id: 2, date: '2024-03-10', title: '优化暗黑模式', content: '修复了暗黑模式下部分文字颜色不清晰的问题', type: 'fix' },
-  { id: 3, date: '2024-03-05', title: '新增徽章系统', content: '添加了12个趣味徽章，访客可以通过互动获得', type: 'feature' },
-  { id: 4, date: '2024-02-28', title: '性能优化', content: '优化了图片加载和页面渲染速度', type: 'optimize' },
-  { id: 5, date: '2024-02-20', title: '新增时间轴页面', content: '添加了内容时间轴功能，可以按时间浏览所有内容', type: 'feature' },
-  { id: 6, date: '2024-02-15', title: '更换主题配色', content: '调整为更温暖的奶油色系，视觉更舒适', type: 'theme' }
+export const changelog: ChangelogEntry[] = [
+  { id: 1, date: '2024-05-20', title: '新增 Now 实时状态页', content: '可以查看站长当前在读、在玩、在学什么', type: 'feature' },
+  { id: 2, date: '2024-05-15', title: '修复留言板样式问题', content: '修复了移动端留言卡片溢出的问题', type: 'fix' },
+  { id: 3, date: '2024-05-10', title: '优化页面加载速度', content: '图片懒加载、代码分割、缓存优化', type: 'optimize' },
+  { id: 4, date: '2024-05-01', title: '网站正式上线', content: '个人博客网站正式上线，包含博客、留言板、友链等功能', type: 'feature' },
+  { id: 5, date: '2024-04-25', title: '暗黑模式主题', content: '新增暗黑模式，保护眼睛', type: 'theme' }
 ]
 
-export const timelineItems: TimelineItem[] = [
-  { id: 1, date: '2024-03-15', title: '春日里的一场小散步', description: '记录了一次愉快的春日散步', type: 'article', link: '/blog/spring-day' },
-  { id: 2, date: '2024-03-10', title: '通关了《塞尔达传说》', description: '200小时的冒险终于结束', type: 'collection' },
-  { id: 3, date: '2024-03-05', title: '学会了手冲咖啡', description: '从零开始学习手冲咖啡', type: 'life' },
-  { id: 4, date: '2024-02-28', title: '自制日式拉面', description: '花了整整一个下午做拉面', type: 'life' },
-  { id: 5, date: '2024-02-20', title: '读完《原子习惯》', description: '改变了我对习惯养成的认知', type: 'collection' },
-  { id: 6, date: '2024-02-15', title: '京都五日游', description: '寺庙、和服与抹茶的美好时光', type: 'article', link: '/blog/kyoto-travel' },
-  { id: 7, date: '2024-02-01', title: '网站上线', description: '小橘子的日常正式上线！', type: 'project' }
-]
-
-export const musicTracks: MusicTrack[] = [
-  { id: 1, title: 'Spring Morning', artist: 'Free Music', url: 'https://cdn.pixabay.com/audio/2022/03/15/audio_1b5f0458b0.mp3', cover: 'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=100&h=100&fit=crop' },
-  { id: 2, title: 'Gentle Breeze', artist: 'Free Music', url: 'https://cdn.pixabay.com/audio/2022/05/27/audio_18a23c3cd5.mp3', cover: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&h=100&fit=crop' },
-  { id: 3, title: 'Peaceful Piano', artist: 'Free Music', url: 'https://cdn.pixabay.com/audio/2022/10/18/audio_4b30b04a4f.mp3', cover: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100&h=100&fit=crop' },
-  { id: 4, title: 'Sunny Day', artist: 'Free Music', url: 'https://cdn.pixabay.com/audio/2022/03/24/audio_d1718ab41b.mp3', cover: 'https://images.unsplash.com/photo-1501612780327-45045538702b?w=100&h=100&fit=crop' },
-  { id: 5, title: 'Quiet Evening', artist: 'Free Music', url: 'https://cdn.pixabay.com/audio/2022/08/02/audio_464c30e563.mp3', cover: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=100&h=100&fit=crop' }
-]
-
-export const readerLocations: ReaderLocation[] = [
-  { city: '北京', count: 234, lat: 39.9, lng: 116.4 },
-  { city: '上海', count: 189, lat: 31.2, lng: 121.5 },
-  { city: '广州', count: 156, lat: 23.1, lng: 113.3 },
-  { city: '深圳', count: 143, lat: 22.5, lng: 114.1 },
-  { city: '杭州', count: 98, lat: 30.3, lng: 120.2 },
-  { city: '成都', count: 87, lat: 30.6, lng: 104.1 },
-  { city: '武汉', count: 76, lat: 30.6, lng: 114.3 },
-  { city: '南京', count: 65, lat: 32.1, lng: 118.8 }
+export const timeline: TimelineItem[] = [
+  { id: 1, date: '2024-05-20', title: '开始学习 Rust', content: '终于开始学 Rust 了，所有权系统真的很有意思', type: 'life' },
+  { id: 2, date: '2024-05-15', title: '发布了 Vue3 学习笔记', content: '整理了 Composition API 的使用心得', type: 'article' },
+  { id: 3, date: '2024-05-10', title: '读完了《百年孤独》', content: '魔幻现实主义的巅峰，马尔克斯太厉害了', type: 'collection' },
+  { id: 4, date: '2024-05-01', title: '网站正式上线', content: '经过一个月的开发，个人博客终于上线了', type: 'project' },
+  { id: 5, date: '2024-04-20', title: '周末去了杭州', content: '西湖骑行，断桥残雪，太美了', type: 'photo' },
+  { id: 6, date: '2024-04-15', title: '完成了 TypeScript 技巧文章', content: '整理了日常开发中常用的 TS 技巧', type: 'article' }
 ]
