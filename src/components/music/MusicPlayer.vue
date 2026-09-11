@@ -112,12 +112,12 @@ function loadTrack() {
 function seek(e: Event) {
   if (!audio || !duration.value) return
   const target = e.target as HTMLInputElement
-  audio.currentTime = (target.value / 100) * duration.value
+  audio.currentTime = (Number(target.value) / 100) * duration.value
 }
 
 function setVolume(e: Event) {
   const target = e.target as HTMLInputElement
-  volume.value = target.value / 100
+  volume.value = Number(target.value) / 100
   if (audio) audio.volume = volume.value
 }
 
