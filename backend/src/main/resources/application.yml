@@ -7,7 +7,11 @@ spring:
   
   # MySQL
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:xiaojuzi_blog}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
+    # allowPublicKeyRetrieval=true 是 MySQL 8 必需的：
+    # MySQL 8 默认认证插件是 caching_sha2_password，在 useSSL=false（非加密连接）下，
+    # 客户端必须向服务端索取 RSA 公钥来加密密码，JDBC 默认禁止该行为，
+    # 会直接抛 "Public Key Retrieval is not allowed" 导致连不上库。
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:xiaojuzi_blog}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: ${DB_USER:root}
     password: ${DB_PASSWORD:root123}
     driver-class-name: com.mysql.cj.jdbc.Driver
