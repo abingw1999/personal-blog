@@ -1,6 +1,15 @@
 # Maven构建阶段
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /app
+
+# 国内服务器直连 Maven 中央仓库很慢（实测约 10 分钟），改用腾讯云镜像加速
+RUN mkdir -p /root/.m2 && printf '%s\n' \
+    '<settings><mirrors><mirror>' \
+    '<id>tencent</id>' \
+    '<mirrorOf>central</mirrorOf>' \
+    '<url>https://mirrors.cloud.tencent.com/nexus/repository/maven-public/</url>' \
+    '</mirror></mirrors></settings>' > /root/.m2/settings.xml
+
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 COPY src ./src

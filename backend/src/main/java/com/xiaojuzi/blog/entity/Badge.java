@@ -16,6 +16,9 @@ public class Badge {
     private String name;
     private String icon;
     private String description;
+    // 注意：表里的列名是 condition_desc（condition 是 MySQL 保留字，不能直接做列名），
+    // 这里必须显式指定，否则 MyBatis-Plus 会按字段名生成 condition，查询时报 Unknown column
+    @TableField("condition_desc")
     private String condition;
     private Integer sortOrder;
     

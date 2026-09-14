@@ -92,3 +92,9 @@ logs/
 
 # CodeGraph index
 .codegraph
+
+# Java / Maven 构建产物
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar

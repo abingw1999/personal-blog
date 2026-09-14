@@ -172,8 +172,12 @@ CREATE TABLE IF NOT EXISTS admin_users (
 -- ============================================
 
 -- 管理员（密码: admin123，BCrypt加密）
+-- 注意：下方哈希是通过 BCryptPasswordEncoder 真实生成并验证过的（matches("admin123") == true）。
+--      上线生产环境请务必改掉这个默认密码！
+-- ON DUPLICATE KEY UPDATE 是为了让本文件在已初始化的库上重跑时也能刷新密码。
 INSERT INTO admin_users (username, password, nickname, avatar) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', '小橘子', 'https://api.dicebear.com/7.0/thumbs/svg?seed=orange');
+('admin', '$2a$10$wjRxZVtI7a5rLHfkWDhANezSplyqOJHqoNVbsXNklWGF4b6k3ZjfG', '小橘子', 'https://api.dicebear.com/7.0/thumbs/svg?seed=orange')
+ON DUPLICATE KEY UPDATE password = VALUES(password);
 
 -- 示例文章
 INSERT INTO articles (slug, title, excerpt, content, cover, category, tags, read_time, word_count, views, featured) VALUES
