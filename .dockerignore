@@ -1,0 +1,42 @@
+# ============================================
+# Docker 构建上下文排除项（前端 build context = 仓库根目录）
+# ============================================
+#
+# ⚠️ 最关键的一条是 node_modules：
+#   Dockerfile 里的顺序是
+#       COPY package.json pnpm-lock.yaml ./
+#       RUN pnpm install --frozen-lockfile
+#       COPY . .          <-- 如果宿主机有 node_modules，这一步会把它复制进容器
+#       RUN pnpm build
+#   `pnpm install` 装的是 Linux 版依赖，而宿主机的 node_modules 里是
+#   Windows/macOS 版（esbuild 等平台相关二进制、.cmd/.ps1 脚本），
+#   一旦覆盖过去，容器里的 `pnpm build` 会直接报平台不匹配而失败。
+#   所以必须排除 node_modules。
+
+node_modules
+**/node_modules
+
+# 构建产物 / 缓存
+dist
+*.tsbuildinfo
+
+# git 元数据（体积大，构建用不到）
+.git
+.gitignore
+
+# 环境变量（可能含密钥，不要进镜像）
+.env
+.env.local
+
+# 后端源码不参与前端镜像构建（后端用自己的 backend/ 作为构建上下文）
+backend
+
+# 其他
+.m2repo
+*.log
+.coze
+.cozeproj
+.vscode
+.idea
+.DS_Store
+Thumbs.db

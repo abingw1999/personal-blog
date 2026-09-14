@@ -1,0 +1,13 @@
+# ============================================
+# Docker 构建上下文排除项（后端 build context = ./backend）
+# ============================================
+#
+# 后端 Dockerfile 只显式 COPY pom.xml 和 src/，所以 target/ 本来就不会进镜像。
+# 但排除掉可以大幅减小发送给 docker daemon 的上下文体积、加快构建。
+
+target
+*.log
+.mvn
+.idea
+*.iml
+.DS_Store

@@ -1,5 +1,8 @@
 # 小橘子的日常 - 部署文档
 
+> 一键部署直接看 **「Docker 部署 Runbook」**，照着敲即可。
+> 后面是接口清单、`.dockerignore` 说明和排错。
+
 ## 项目结构
 
 ```
@@ -8,232 +11,301 @@
 │   ├── api/index.ts        # 后端接口封装（所有页面取数都走这里）
 │   └── config/site.ts      # 站点静态配置（站点名/头像/社交链接等）
 ├── backend/                # Spring Boot 后端
-│   ├── pom.xml
-│   ├── src/
-│   ├── sql/init.sql        # 数据库初始化脚本（建表 + 示例数据）
+│   ├── sql/init.sql        # 建表 + 示例数据（只在 MySQL 首次初始化时执行）
 │   └── Dockerfile.backend
-├── deploy/
-│   └── nginx.conf          # Nginx 配置（含 /api 反向代理到 backend:8080）
-├── docker-compose.yml      # Docker 编排
-├── Dockerfile              # 前端 Dockerfile
+├── deploy/nginx.conf       # Nginx 配置（含 /api 反向代理到 backend:8080）
+├── docker-compose.yml
+├── Dockerfile              # 前端镜像（pnpm build → nginx）
+├── .dockerignore           # ⚠️ 必须保留，见「关于 .dockerignore」
 └── .env.example            # 环境变量模板
 ```
 
-## 架构说明
+## 架构
 
 ```
 浏览器 → Nginx(:80) ┬─ 静态文件 dist/
-                    ├─ /api/*     → 反向代理 → backend:8080
-                    └─ /uploads/* → 反向代理 → backend:8080
+                    ├─ /api/*     反向代理 → backend:8080
+                    └─ /uploads/* 反向代理 → backend:8080
 ```
 
-前端所有数据都通过 `/api/...` 从 Spring Boot 后端获取，**不再有本地 mock 数据**。
-本地 `pnpm dev` 时由 `vite.config.ts` 里的 proxy 转发到 `localhost:8080`；
-生产环境由 `deploy/nginx.conf` 转发到容器 `backend:8080`。
+前端所有数据都通过 `/api/...` 从 Spring Boot 获取，**没有本地 mock 数据**。
+本地 `pnpm dev` 由 `vite.config.ts` 的 proxy 转发到 `localhost:8080`；
+生产由 `deploy/nginx.conf` 转发到容器 `backend:8080`。
 
-## 方案一：Docker 一键部署（推荐）
+---
 
-### 前置要求
-- 一台服务器（推荐 2核4G，腾讯云轻量/CVM 均可）
-- Docker + Docker Compose
+# Docker 部署 Runbook
 
-### 步骤
+## 前提检查
 
 ```bash
-# 1. 克隆项目到服务器
-git clone https://github.com/abingw1999/personal-blog.git /opt/xiaojuzi-blog
-cd /opt/xiaojuzi-blog
+docker --version                 # 需要 Docker 20.10+
+docker compose version           # 需要 Compose V2
+```
 
-# 2. 配置环境变量
+如果 `docker compose` 报错但 `docker-compose` 能用，下文命令把
+`docker compose` 换成 `docker-compose` 即可。
+
+**腾讯云安全组**：控制台 → 安全组 → 入站规则，放通
+
+- `22`（SSH）
+- `80`（网站）
+
+不放通 80，容器起来了但外网访问不到 —— 这一步最容易漏。
+
+## 1. 拉代码
+
+```bash
+mkdir -p /opt && cd /opt
+git clone https://github.com/abingw1999/personal-blog.git xiaojuzi-blog
+cd /opt/xiaojuzi-blog
+```
+
+已经有这个目录（之前部署过），就只更新：
+
+```bash
+cd /opt/xiaojuzi-blog
+git pull
+```
+
+> 如果服务器上这个目录不是 `git clone` 来的（是手动传上去的），
+> 建议重新 clone 一份到新目录，避免旧文件残留。
+
+## 2. 配置环境变量
+
+```bash
+cd /opt/xiaojuzi-blog
 cp .env.example .env
-vim .env  # 修改数据库密码、JWT密钥等
-
-# 3. 启动所有服务
-docker-compose up -d --build
-
-# 4. 查看日志
-docker-compose logs -f
-
-# 5. 停止服务
-docker-compose down
+openssl rand -base64 48        # 用这个输出去填 JWT_SECRET
+vim .env
 ```
 
-### 服务端口
-- 前端：80
-- 后端 API：8080
-- MySQL：3306
-- Redis：6379
+`.env` 里**至少改这两个**：
 
-### ⚠️ 已部署过一次的话必看
+| 变量 | 改成什么 |
+|---|---|
+| `DB_PASSWORD` | 自己设一个强一点的数据库密码 |
+| `JWT_SECRET` | `openssl rand -base64 48` 生成的随机串 |
 
-`init.sql` 只在 **MySQL 数据卷首次创建时** 由 MySQL 容器执行（
-`/docker-entrypoint-initdb.d/` 机制）。如果你之前已经 `up` 过一次，
-数据库卷 `mysql_data` 已经存在，此时改 `init.sql` 再重新 `up` 是**不会生效**的
-（包括新增的示例数据、以及 admin 密码哈希的更新）。
+`.env` 已在 `.gitignore` 里不会被提交，`.dockerignore` 也会把它挡在镜像外。
 
-因为博客目前还没有真实数据，最省事的做法是清库重来：
+## 3. ⚠️ 清掉旧的 MySQL 数据卷（只做一次）
+
+**`backend/sql/init.sql` 只在 MySQL 数据卷第一次创建时执行**
+（MySQL 官方镜像的 `/docker-entrypoint-initdb.d/` 机制）。
+卷已存在的话，改 `init.sql` 再 `up` 不会生效 —— 新加的示例数据、admin 密码
+都进不去，表现就是「网站能打开但数据是空的」。
+
+博客目前没有真实数据，直接连卷一起清掉最省事：
 
 ```bash
 cd /opt/xiaojuzi-blog
-docker-compose down
-
-# 删掉 MySQL 数据卷（注意：会清空数据库，确认没有真实数据再做）
-docker volume rm personal-blog_mysql_data
-# 卷名如果不对，用 docker volume ls | grep mysql_data 查一下
-
-docker-compose up -d --build
+docker compose down -v
 ```
 
-不想清库的话，也可以手动把增量 SQL 灌进去：
+`-v` 会删除 compose 文件里声明的数据卷（`mysql_data` / `redis_data` / `uploads`），
+**数据库会被清空**。确认没有要保留的数据再执行。
+
+> 不想清库的话，见文末「不想清库怎么补数据」。
+
+## 4. 构建并启动
 
 ```bash
-# 只补示例数据（表已存在时适用）
-docker exec -i xiaojuzi-mysql mysql -uroot -proot123 xiaojuzi_blog \
-  < backend/sql/init.sql
+cd /opt/xiaojuzi-blog
+docker compose up -d --build
 ```
 
-> 注：`init.sql` 里的 `INSERT` 没有唯一键约束，重复执行会产生重复数据。
-> 空库首次部署时不用担心；手动重灌前建议先确认表里是否已有数据。
+首次构建要下载基础镜像 + Maven 依赖，大约 **5～10 分钟**，属于正常
+（后端 Dockerfile 已配置腾讯云 Maven 镜像加速，直连中央仓库要 10 分钟以上）。
 
-## 方案二：手动部署
-
-### 1. 安装环境
+## 5. 确认状态
 
 ```bash
-# Java 17
-sudo apt install openjdk-17-jdk
-
-# MySQL 8.0
-sudo apt install mysql-server
-
-# Redis
-sudo apt install redis-server
-
-# Node.js 20
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install nodejs
-npm install -g pnpm
+docker compose ps
 ```
 
-### 2. 初始化数据库
+理想结果：
+
+```
+NAME                  STATUS
+xiaojuzi-mysql        Up (healthy)
+xiaojuzi-redis        Up
+xiaojuzi-backend      Up
+xiaojuzi-frontend     Up
+```
+
+**后端第一次启动可能重启一两次，是正常的** —— MySQL 首次初始化要跑建表脚本，
+后端连不上会退出，`restart: always` 会自动重试，等 MySQL 准备好就稳定了。
+观察日志：
 
 ```bash
-mysql -u root -p < backend/sql/init.sql
+docker compose logs -f backend
 ```
 
-### 3. 构建并启动后端
+看到 `Started BlogApplication in x.x seconds` 就成功了（`Ctrl+C` 退出日志）。
+
+## 6. 验证
 
 ```bash
-cd backend
-mvn package -DskipTests
-java -jar target/blog-1.0.0.jar
+# 后端接口，应返回 JSON 且 code=200
+curl -s http://localhost/api/articles | head -c 300; echo
+curl -s http://localhost/api/comments | head -c 300; echo
 ```
 
-### 4. 构建并启动前端
+浏览器打开 `http://101.35.235.238`，逐项检查：
+
+- 首页有 3 篇精选文章 + 5 篇最新文章
+- 「博客」3 篇、「友链」2 个、「收藏单」7 条、「建站日记」5 条
+- 「留言板」3 条留言，其中第一条下面挂着 1 条回复
+- 左下角音乐播放器能显示曲目
+
+都对上，说明前后端已经通了。
+
+## 7. 以后更新代码
 
 ```bash
-pnpm install --frozen-lockfile
-pnpm build
-# 使用 Nginx 托管 dist 目录
+cd /opt/xiaojuzi-blog
+git pull
+docker compose up -d --build
 ```
 
-### 5. 配置 Nginx
+只改了前端就 `docker compose up -d --build frontend`，只改后端就 `... backend`。
+
+---
+
+## 后台管理与账号
+
+- 登录：`POST /api/auth/login`，body `{"username":"admin","password":"admin123"}`
+- 返回的 `token` 放在请求头 `Authorization: Bearer <token>` 访问 `/api/admin/*`
+
+**上线后请立刻改掉默认密码。** 改密码需要重新生成 BCrypt 哈希：
 
 ```bash
-sudo cp deploy/nginx.conf /etc/nginx/sites-available/xiaojuzi
-sudo ln -s /etc/nginx/sites-available/xiaojuzi /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
+source /opt/xiaojuzi-blog/.env
+docker exec -i xiaojuzi-mysql mysql -uroot -p"$DB_PASSWORD" xiaojuzi_blog \
+  -e "UPDATE admin_users SET password='<新的BCrypt哈希>' WHERE username='admin';"
 ```
 
-## 环境变量说明
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| DB_HOST | MySQL 地址 | localhost |
-| DB_PORT | MySQL 端口 | 3306 |
-| DB_NAME | 数据库名 | xiaojuzi_blog |
-| DB_USER | 数据库用户 | root |
-| DB_PASSWORD | 数据库密码 | root123 |
-| REDIS_HOST | Redis 地址 | localhost |
-| REDIS_PORT | Redis 端口 | 6379 |
-| REDIS_PASSWORD | Redis 密码 | 空 |
-| JWT_SECRET | JWT 密钥 | 需修改 |
-| FILE_UPLOAD_PATH | 上传文件目录 | /app/uploads/ |
+`JWT_SECRET` 也务必换成随机值。
 
 ## 接口一览（前端已全部对接）
 
 | 接口 | 说明 | 对应页面 |
 |------|------|----------|
-| `GET /api/articles` | 文章分页列表（支持 page/size/category/keyword） | 首页、博客列表 |
+| `GET /api/articles` | 文章分页列表（page/size/category/keyword） | 首页、博客列表 |
 | `GET /api/articles/{slug}` | 文章详情（同时阅读量 +1） | 文章页、404 页随机跳转 |
-| `GET /api/articles/featured` | 精选文章 | —— |
+| `GET /api/articles/featured` | 精选文章（后端 LIMIT 6） | 首页 |
 | `GET /api/articles/categories` | 全部分类 | 博客列表筛选 |
 | `GET /api/articles/random` | 随机文章 | 404 页「随机看看」 |
 | `GET /api/comments` | 留言（主留言 + 内嵌 replies） | 留言板 |
 | `POST /api/comments` | 发表留言 / 回复 | 留言板 |
 | `GET /api/friends` | 友链 | 友链页 |
-| `GET /api/products` | 商品 | 橱窗页 |
+| `GET /api/products` | 商品 | 橱窗页（默认关闭） |
 | `GET /api/music` | 音乐 | 左下角播放器 |
 | `GET /api/collections` | 收藏（书/影/游戏） | 收藏单页 |
 | `GET /api/now-status` | Now 状态 | Now 页 |
 | `GET /api/footprints` | 足迹 | 足迹页 |
 | `GET /api/badges` | 徽章 | 徽章页 |
 | `GET /api/changelog` | 更新日志 | 建站日记页 |
-| `POST /api/auth/login` | 管理员登录（返回 JWT） | —— |
-| `/api/admin/**` | 后台增删改，需 `Authorization: Bearer <token>` | —— |
+| `POST /api/auth/login` | 管理员登录 | —— |
+| `/api/admin/**` | 后台增删改（需 Bearer Token） | —— |
 
-时间轴（`/timeline`）后端没有独立接口，前端用「文章 + 收藏」在本地聚合而成。
+时间轴（`/timeline`）后端没有独立接口，前端用「文章 + 收藏」在本地聚合。
 
-## 后台管理
+---
 
-### 登录
-- 地址：`POST /api/auth/login`
-- 默认账号：`admin`
-- 默认密码：`admin123`
-- 返回的 `token` 放在 `Authorization: Bearer <token>` 头里访问 `/api/admin/*`
+## 关于 .dockerignore（不要删）
 
-### 密码修改
-默认密码只在 `init.sql` 里写入一次。改密码需要重新生成 BCrypt 哈希后更新 `admin_users` 表：
+前端镜像的构建上下文是**仓库根目录**，Dockerfile 顺序是：
 
-```sql
-UPDATE admin_users SET password = '<新的BCrypt哈希>' WHERE username = 'admin';
+```dockerfile
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY . .          # ← 没有 .dockerignore 的话，这里会把宿主机 node_modules 复制进去
+RUN pnpm build
 ```
+
+`pnpm install` 装的是 Linux 依赖。如果宿主机的 `node_modules`
+（Windows/macOS 版，其中 esbuild 是平台相关二进制）被 `COPY . .` 覆盖进去，
+容器里的 `pnpm build` 会因为平台不匹配直接失败。
+
+根目录 `.dockerignore` 排除了 `node_modules`、`dist`、`.git`、`backend/` 等，
+**这个文件必须保留**。`backend/.dockerignore` 同理，排除 `target/` 减小上下文体积。
 
 ## 常见问题
 
-### Q: 页面能打开但数据全是空的？
-A: 检查 `/api` 是否通。在服务器上执行：
+### Q: 网站能打开但数据全是空的？
+按顺序查：
+
 ```bash
-curl -i http://localhost/api/articles
-```
-返回 502/504 说明 Nginx 到 backend 容器不通，看后端日志：
-```bash
-docker-compose logs -f backend
+curl -i http://localhost/api/articles        # 接口通不通
+docker compose logs --tail=100 backend       # 后端有没有报错
+docker compose logs --tail=50 mysql          # 有没有执行 init.sql
 ```
 
-### Q: 提示数据库表不存在 / 没有示例数据？
-A: 见上文「已部署过一次的话必看」，`init.sql` 不会在已有数据卷上重跑。
+如果接口报 `Table 'xiaojuzi_blog.articles' doesn't exist`，说明 `init.sql` 没跑
+—— 回到第 3 步清卷重来。
+
+### Q: `docker compose up` 卡在 building frontend？
+看构建日志里 `COPY . .` 那一步是不是传了很多文件 —— 说明 `node_modules`
+被复制进镜像了。确认 `.dockerignore` 存在且内容正确。
 
 ### Q: 留言的回复显示不出来？
-A: 后端 `CommentService.getComments()` 已修复（原实现查了回复但没有挂到主留言上）。
-确认服务器上跑的是最新代码：`docker-compose up -d --build backend`。
+后端 `CommentService.getComments()` 曾经查了回复却丢弃，已修复。
+确认服务器上是新代码（`git log -1` 应包含该修复），然后
+`docker compose up -d --build backend`。
 
-### Q: 音乐播放器无法播放？
-A: 检查音乐 URL 是否可访问，建议使用 HTTPS 链接。
+### Q: 后端一直重启 / 报数据库连不上？
+```bash
+docker compose logs --tail=80 backend
+docker compose ps mysql
+```
+多半是 `.env` 里的 `DB_PASSWORD` 和 MySQL 数据卷初始化时用的密码不一致。
+改过 `.env` 密码但没清卷的话，MySQL 里还是旧密码 —— 执行第 3 步清卷重建。
 
-### Q: 图片加载慢？
-A: 示例数据用的是 unsplash 图片，建议换成本地图床或对象存储 + CDN。
+### Q: 后台管理能登录但改不了数据？
+`/api/admin/**` 需要 `Authorization: Bearer <token>` 头；token 24 小时后过期，需重新登录。
 
-### Q: 如何修改网站名 / 头像 / 公告？
-A: 改 `src/config/site.ts` 里的 `siteConfig`，改完重新构建前端
-（`docker-compose up -d --build frontend`）。
+### Q: 音乐播放器不响？
+示例数据用的是 `soundhelix.com` 的公网 mp3，确认服务器能出网。
+换成本地文件或对象存储更稳。
+
+### Q: 图片加载慢 / 加载不出来？
+示例数据用的是 unsplash 图片，国内访问不稳定。换成本地图床或对象存储 + CDN。
+
+### Q: 如何改网站名 / 头像 / 公告？
+改 `src/config/site.ts` 里的 `siteConfig`，然后：
+
+```bash
+docker compose up -d --build frontend
+```
 
 ### Q: 想打开商品橱窗？
-A: `src/config/site.ts` 里把 `shopEnabled` 改成 `true`。
+`src/config/site.ts` 里把 `shopEnabled` 改成 `true`，重新构建前端。
+
+### 不想清库怎么补数据？
+手动灌入（**`INSERT` 没有唯一键约束，重复执行会产生重复数据**，
+表里已有数据时建议手工挑需要的语句执行）：
+
+```bash
+cd /opt/xiaojuzi-blog
+source .env
+docker exec -i xiaojuzi-mysql mysql -uroot -p"$DB_PASSWORD" xiaojuzi_blog \
+  < backend/sql/init.sql
+```
+
+---
 
 ## 维护建议
 
-1. **定期备份数据库**：`mysqldump -u root -p xiaojuzi_blog > backup.sql`
+1. **定期备份数据库**
+   ```bash
+   source /opt/xiaojuzi-blog/.env
+   docker exec xiaojuzi-mysql mysqldump -uroot -p"$DB_PASSWORD" xiaojuzi_blog > backup-$(date +%F).sql
+   ```
 2. **改掉默认密码和 JWT_SECRET**，不要用仓库里的默认值
-3. **更新依赖**：定期检查安全更新
-4. **SSL 证书**：使用 Let's Encrypt 免费证书
+3. **收敛端口暴露**：`docker-compose.yml` 里 MySQL(3306)、Redis(6379) 映射到了宿主机。
+   只在本机使用的话，建议删掉这两段 `ports`，或改成 `127.0.0.1:3306:3306`，
+   避免数据库直接暴露在公网
+4. **SSL 证书**：用 Let's Encrypt / 腾讯云免费证书配 HTTPS
+5. **更新依赖**：定期检查安全更新
