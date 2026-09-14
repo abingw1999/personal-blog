@@ -2,6 +2,13 @@
 -- 小橘子的日常 - 数据库初始化脚本
 -- ============================================
 
+-- ⚠️ 这一行必须保留，否则本文件里的中文会变成乱码。
+-- MySQL 官方镜像默认 locale 不是 UTF-8，mysql 客户端的
+-- --default-character-set=auto 会退化用 latin1 解释本文件的 UTF-8 字节，
+-- 存进 utf8mb4 列就是「ä½ å¥½」这种乱码（读出来也永远修不回去）。
+-- 显式 SET NAMES utf8mb4 与容器 locale 无关，可以彻底避免。
+SET NAMES utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS xiaojuzi_blog DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE xiaojuzi_blog;
 
