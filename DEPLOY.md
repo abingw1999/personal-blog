@@ -255,13 +255,39 @@ docker compose logs --tail=50 mysql          # 有没有执行 init.sql
 确认服务器上是新代码（`git log -1` 应包含该修复），然后
 `docker compose up -d --build backend`。
 
+### Q: 所有接口都返回 500？日志报 `Public Key Retrieval is not allowed`？
+
+MySQL 8 + `useSSL=false` 的经典坑：MySQL 8 默认认证插件是 `caching_sha2_password`，
+非加密连接下客户端必须向服务端索取 RSA 公钥来加密密码，而 JDBC 默认禁止该行为，
+于是连接根本建不起来。
+
+现象很有迷惑性：**容器能正常启动、`docker compose ps` 显示 Up（healthy），
+但一访问接口就 500** —— 因为 HikariCP 连接池是**懒加载**的，启动时不建连接，
+第一个请求进来才去连，连不上就 500，所以启动日志里看不到错。
+
+已在 `application.yml` 的 JDBC URL 加上 `allowPublicKeyRetrieval=true` 修复。
+确认服务器代码是最新的，再重建后端：
+
+```bash
+git log -1 --oneline                 # 应能看到 "Public Key Retrieval" 那条提交
+docker compose up -d --build backend
+```
+
+> 特征辨识：用 `mysql` 客户端在容器里能正常查表、但后端连不上，就是这个问题的典型表现
+> —— 客户端走本地 socket 被 MySQL 视为安全通道，不触发公钥索取。
+
 ### Q: 后端一直重启 / 报数据库连不上？
 ```bash
 docker compose logs --tail=80 backend
 docker compose ps mysql
 ```
-多半是 `.env` 里的 `DB_PASSWORD` 和 MySQL 数据卷初始化时用的密码不一致。
-改过 `.env` 密码但没清卷的话，MySQL 里还是旧密码 —— 执行第 3 步清卷重建。
+
+先看报错类型再对症：
+
+- `Public Key Retrieval is not allowed` → 见上一条（JDBC 参数问题，改代码重建）
+- `Access denied for user ...` → `.env` 里的 `DB_PASSWORD` 和 MySQL 数据卷
+  初始化时用的密码不一致。改过 `.env` 密码但没清卷的话，MySQL 里还是旧密码
+  —— 执行第 3 步清卷重建。
 
 ### Q: 后台管理能登录但改不了数据？
 `/api/admin/**` 需要 `Authorization: Bearer <token>` 头；token 24 小时后过期，需重新登录。
