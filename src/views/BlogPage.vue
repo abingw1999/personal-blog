@@ -56,9 +56,11 @@ import type { Article } from '@/types'
 const selectedCategory = ref('全部')
 const searchQuery = ref('')
 
-// 文章列表从后端 /api/articles 拉取
+// 文章列表从后端 /api/articles 拉取。
+// 分类/关键词目前在前端过滤（后端同样支持 category/keyword 参数，
+// 文章量大了之后可以改成服务端筛选 + 分页）。
 const { data: articles, loading, error } = useAsyncData<Article[]>(
-  () => api.getArticles({ page: 1, size: 200 }).then((r) => r.list),
+  () => api.getArticles({ page: 1, size: 100 }).then((r) => r.list),
   []
 )
 

@@ -95,14 +95,23 @@ import type { Article } from '@/types'
 
 const config = siteConfig
 
-// 文章改为从后端 /api/articles 拉取（原来是本地 mock）
-const { data: articles, loading } = useAsyncData<Article[]>(
-  () => api.getArticles({ page: 1, size: 100 }).then((r) => r.list),
-  []
+// 精选走 /api/articles/featured（后端已 LIMIT 6），
+// 最新只取 5 条 —— 避免为了展示 8 篇文章把整库带全文的文章全拉下来。
+// 两个请求并行，任一失败都不影响另一块渲染。
+const { data, loading } = useAsyncData<{ featured: Article[]; latest: Article[] }>(
+  async () => {
+    const [featured, latest] = await Promise.all([
+      api.getFeaturedArticles().catch(() => [] as Article[]),
+      api.getArticles({ page: 1, size: 5 }).then((r) => r.list).catch(() => [] as Article[]),
+    ])
+    return { featured, latest }
+  },
+  { featured: [], latest: [] }
 )
 
-const featuredPosts = computed(() => articles.value.filter(a => a.featured).slice(0, 3))
-const latestPosts = computed(() => articles.value.slice(0, 5))
+const featuredPosts = computed(() => data.value.featured.slice(0, 3))
+const latestPosts = computed(() => data.value.latest)
+
 const quickLinks = [
   { name: '留言板', path: '/guestbook', icon: '💬' },
   { name: '友链', path: '/friends', icon: '🔗' },
