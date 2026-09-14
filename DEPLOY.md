@@ -175,10 +175,18 @@ docker compose up -d --build
 
 ## 后台管理与账号
 
-- 登录：`POST /api/auth/login`，body `{"username":"admin","password":"admin123"}`
-- 返回的 `token` 放在请求头 `Authorization: Bearer <token>` 访问 `/api/admin/*`
+**现在有可视化后台了，日常维护不用敲命令。**
 
-**上线后请立刻改掉默认密码。** 改密码需要重新生成 BCrypt 哈希：
+| 项目 | 值 |
+|---|---|
+| 地址 | `http://你的服务器IP/admin` |
+| 默认账号 | `admin` / `admin123` |
+
+前台的页脚右下角有「后台管理」入口。后台能管：文章、留言、建站日记、收藏单、Now、足迹、徽章、友链、橱窗、音乐，以及图片上传和改密码。**详细说明见 [ADMIN.md](./ADMIN.md)。**
+
+**上线后请立刻改掉默认密码** —— 进后台「设置 → 修改登录密码」即可（需要输入原密码）。
+
+如果忘了密码，只能回到命令行重置：
 
 ```bash
 source /opt/xiaojuzi-blog/.env
@@ -208,9 +216,10 @@ docker exec -i xiaojuzi-mysql mysql -uroot -p"$DB_PASSWORD" xiaojuzi_blog \
 | `GET /api/badges` | 徽章 | 徽章页 |
 | `GET /api/changelog` | 更新日志 | 建站日记页 |
 | `POST /api/auth/login` | 管理员登录 | —— |
-| `/api/admin/**` | 后台增删改（需 Bearer Token） | —— |
+| `POST /api/admin/upload` | 图片上传 | 后台各处的「上传」按钮 |
+| `/api/admin/**` | 后台增删改（需 Bearer Token） | 后台全部页面 |
 
-时间轴（`/timeline`）后端没有独立接口，前端用「文章 + 收藏」在本地聚合。
+后台接口的完整清单在 ADMIN.md 里。时间轴（`/timeline`）后端没有独立接口，前端用「文章 + 收藏」在本地聚合。
 
 ---
 
@@ -290,14 +299,31 @@ docker compose ps mysql
   —— 执行第 3 步清卷重建。
 
 ### Q: 后台管理能登录但改不了数据？
-`/api/admin/**` 需要 `Authorization: Bearer <token>` 头；token 24 小时后过期，需重新登录。
+`/api/admin/**` 需要 `Authorization: Bearer <token>` 头；token 24 小时后过期，会自动跳回登录页重新登录。
+如果提示的是具体业务错误（比如「slug 已存在」），那是数据校验，按提示改即可。
+
+### Q: 后台上传图片报 413 Request Entity Too Large？
+Nginx 默认只允许 1MB 的请求体。本项目 `deploy/nginx.conf` 里已加 `client_max_body_size 8m;`，
+如果报这个错说明 nginx 配置没生效（配置是挂载进容器的，改完要 `docker compose restart frontend`）。
+
+### Q: 后台上传成功，但图片显示 404？
+Nginx 的 location 匹配里**正则优先于普通前缀**。`/uploads/x.jpg` 会被
+`location ~* \.(jpg|png|...)$` 那条规则接走，去 `/usr/share/nginx/html` 找文件，自然是 404。
+正确写法是加 `^~`：
+
+```nginx
+location ^~ /uploads/ {
+    proxy_pass http://backend:8080/uploads/;
+}
+```
 
 ### Q: 音乐播放器不响？
 示例数据用的是 `soundhelix.com` 的公网 mp3，确认服务器能出网。
 换成本地文件或对象存储更稳。
 
 ### Q: 图片加载慢 / 加载不出来？
-示例数据用的是 unsplash 图片，国内访问不稳定。换成本地图床或对象存储 + CDN。
+示例数据用的是 unsplash 图片，国内访问不稳定。
+可以在后台上传本地图片（走 `/uploads/`），或换对象存储 + CDN。
 
 ### Q: 如何改网站名 / 头像 / 公告？
 改 `src/config/site.ts` 里的 `siteConfig`，然后：
@@ -329,9 +355,15 @@ docker exec -i xiaojuzi-mysql mysql -uroot -p"$DB_PASSWORD" xiaojuzi_blog \
    source /opt/xiaojuzi-blog/.env
    docker exec xiaojuzi-mysql mysqldump -uroot -p"$DB_PASSWORD" xiaojuzi_blog > backup-$(date +%F).sql
    ```
-2. **改掉默认密码和 JWT_SECRET**，不要用仓库里的默认值
+2. **改掉默认密码和 JWT_SECRET**，不要用仓库里的默认值（后台「设置」页可自助改密码）
 3. **收敛端口暴露**：`docker-compose.yml` 里 MySQL(3306)、Redis(6379) 映射到了宿主机。
    只在本机使用的话，建议删掉这两段 `ports`，或改成 `127.0.0.1:3306:3306`，
    避免数据库直接暴露在公网
 4. **SSL 证书**：用 Let's Encrypt / 腾讯云免费证书配 HTTPS
 5. **更新依赖**：定期检查安全更新
+6. **别忘了备份上传的图片**：图片在后端容器的 `uploads` 卷里（`/app/uploads`），
+   不在 MySQL 里，`mysqldump` 备份不到
+   ```bash
+   docker run --rm -v personal-blog_uploads:/data -v $(pwd):/backup alpine \
+     tar czf /backup/uploads-$(date +%F).tar.gz -C /data .
+   ```

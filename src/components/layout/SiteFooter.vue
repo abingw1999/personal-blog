@@ -20,8 +20,10 @@
           <p class="text-sm text-[var(--color-primary)] font-mono">{{ siteRunningTime }}</p>
         </div>
       </div>
-      <div class="mt-8 pt-4 border-t border-[var(--color-border)] text-center text-sm text-[var(--color-text-muted)]">
+      <div class="mt-8 pt-4 border-t border-[var(--color-border)] flex items-center justify-center gap-3 text-sm text-[var(--color-text-muted)]">
         <p>© 2024 小橘子的日常. Made with ❤️</p>
+        <span class="opacity-40">·</span>
+        <router-link to="/admin" class="hover:text-[var(--color-primary)] transition-colors">后台管理</router-link>
       </div>
     </div>
   </footer>

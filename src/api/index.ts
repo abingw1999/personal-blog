@@ -60,7 +60,14 @@ export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY)
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+/**
+ * 统一请求。管理端（@/api/admin）也复用这个函数，
+ * 保证 JWT 注入、Result 拆包、错误提示三条链路只有一份实现。
+ *
+ * 注意：上传文件时不要走这里——FormData 的 Content-Type 必须由浏览器
+ * 自己带 boundary，手动设 application/json 会让后端解析不出文件。
+ */
+export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((options.headers as Record<string, string>) || {}),
@@ -71,6 +78,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   const resp = await fetch(BASE_URL + path, { ...options, headers })
+
+  // token 失效 / 未登录：Spring Security 会在进控制器之前就拦掉，
+  // 返回的不是 Result 结构。这里统一处理成「登录已过期」，前端好跳登录页。
+  if (resp.status === 401 || resp.status === 403) {
+    handleAuthExpired()
+  }
+
   if (!resp.ok) {
     throw new Error(`请求失败 (HTTP ${resp.status})`)
   }
@@ -82,7 +96,43 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return result.data
 }
 
-function toQuery(params: Record<string, string | number | undefined | null>): string {
+/**
+ * token 过期处理。
+ * 这里不直接 import router —— api 模块被 router 间接依赖，会形成循环。
+ * 改成广播一个事件，由 main.ts 统一跳转。
+ */
+function handleAuthExpired(): void {
+  clearToken()
+  window.dispatchEvent(new CustomEvent('auth:expired'))
+  throw new Error('登录已过期，请重新登录')
+}
+
+/** 上传文件：必须绕开 request()，因为 Content-Type 要交给浏览器自己设（带 boundary） */
+export async function upload<T>(path: string, file: File): Promise<T> {
+  const form = new FormData()
+  form.append('file', file)
+
+  const headers: Record<string, string> = {}
+  const token = getToken()
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const resp = await fetch(BASE_URL + path, { method: 'POST', body: form, headers })
+  if (resp.status === 401 || resp.status === 403) {
+    handleAuthExpired()
+  }
+  const result = (await resp.json()) as ApiResult<T>
+  if (result.code !== 200) {
+    throw new Error(result.message || '上传失败')
+  }
+  return result.data
+}
+
+/** 拼查询串，跳过空值。允许 boolean，好让 featured=true 这类筛选直接传 */
+export function toQuery(
+  params: Record<string, string | number | boolean | undefined | null>
+): string {
   const usp = new URLSearchParams()
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
