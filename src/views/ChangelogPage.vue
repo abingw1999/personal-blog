@@ -19,7 +19,12 @@
 </template>
 
 <script setup lang="ts">
-import { changelog } from '@/data/mock'
+import { api, useAsyncData } from '@/api'
+import type { ChangelogEntry } from '@/types'
+
+// 更新日志从后端 /api/changelog 拉取
+const { data: changelog } = useAsyncData<ChangelogEntry[]>(() => api.getChangelog(), [])
+
 const typeLabels: Record<string, string> = { feature: '新功能', fix: '修复', optimize: '优化', theme: '主题' }
 const typeColors: Record<string, string> = {
   feature: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',

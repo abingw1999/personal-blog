@@ -29,8 +29,18 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { friendLinks } from '@/data/mock'
+import { api, useAsyncData } from '@/api'
+import type { FriendLink } from '@/types'
+
 const selectedCategory = ref('全部')
-const categories = ['全部', ...new Set(friendLinks.map(f => f.category))]
-const filteredFriends = computed(() => selectedCategory.value === '全部' ? friendLinks : friendLinks.filter(f => f.category === selectedCategory.value))
+
+// 友链从后端 /api/friends 拉取
+const { data: friendLinks, loading, error } = useAsyncData<FriendLink[]>(() => api.getFriends(), [])
+
+const categories = computed(() => ['全部', ...new Set(friendLinks.value.map(f => f.category))])
+const filteredFriends = computed(() =>
+  selectedCategory.value === '全部'
+    ? friendLinks.value
+    : friendLinks.value.filter(f => f.category === selectedCategory.value)
+)
 </script>

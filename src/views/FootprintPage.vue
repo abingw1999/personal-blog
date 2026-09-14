@@ -43,8 +43,13 @@
 </template>
 
 <script setup lang="ts">
-import { footprints } from '@/data/mock'
+import { api, useAsyncData } from '@/api'
+import type { FootprintItem } from '@/types'
 
+// 足迹从后端 /api/footprints 拉取
+const { data: footprints } = useAsyncData<FootprintItem[]>(() => api.getFootprints(), [])
+
+// 读者地域统计后端暂无接口，保留本地示例数据
 const readerRegions = [
   { name: '北京', count: 128 },
   { name: '上海', count: 96 },

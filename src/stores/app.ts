@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { siteConfig } from '@/data/mock'
+import { siteConfig } from '@/config/site'
 import type { SiteConfig } from '@/types'
 
 export const useAppStore = defineStore('app', () => {

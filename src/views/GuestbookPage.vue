@@ -20,7 +20,9 @@
       </div>
     </div>
     <!-- Entries -->
-    <div class="space-y-4">
+    <div v-if="loading" class="text-center py-8 text-sm text-[var(--color-text-muted)]">📡 正在加载留言…</div>
+    <div v-else-if="error" class="text-center py-8 text-sm text-[var(--color-text-muted)]">⚠️ {{ error }}</div>
+    <div v-else class="space-y-4">
       <div v-for="entry in entries" :key="entry.id" class="bg-[var(--color-card)] rounded-2xl p-4 border border-[var(--color-border)]">
         <div class="flex items-start gap-3">
           <img :src="entry.avatar" class="w-10 h-10 rounded-full" />
@@ -59,47 +61,88 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { guestbookEntries } from '@/data/mock'
+import { api, useAsyncData } from '@/api'
+import type { Comment, GuestbookEntry } from '@/types'
 
-const entries = ref(guestbookEntries)
 const form = ref({ nickname: '', content: '', emoji: '😊' })
 const replyTo = ref<number | null>(null)
 const replyContent = ref('')
+const submitting = ref(false)
 const emojiList = ['😊', '❤️', '🔥', '😂', '😮', '👍', '🎉', '💪']
 const funTips = ['每一条留言都是对小橘子的鼓励~', '留言区是温暖的角落，请友善发言哦', '你的支持是我更新的动力！', '有什么建议也欢迎告诉我~']
 const currentTip = computed(() => Math.floor(Math.random() * funTips.length))
 
-function submitComment() {
-  if (!form.value.content.trim()) return
-  entries.value.unshift({
-    id: Date.now(),
-    nickname: form.value.nickname || '匿名访客',
-    avatar: `https://api.dicebear.com/7.0/thumbs/svg?seed=${Date.now()}`,
-    content: form.value.content,
-    emoji: form.value.emoji,
-    createdAt: new Date().toLocaleString(),
-    parentId: null,
-    replies: []
+/**
+ * 后端 /api/comments 返回的是「主留言 + 内嵌 replies」的树形结构，
+ * 但为了兼容旧格式（扁平列表），这里两种形态都支持：
+ * - 有 replies 字段：直接递归转换
+ * - 没有 replies 字段：按 parentId 从扁平列表里自己分组
+ */
+function buildTree(list: Comment[]): GuestbookEntry[] {
+  const toEntry = (c: Comment, replies: GuestbookEntry[] = []): GuestbookEntry => ({
+    id: c.id,
+    nickname: c.nickname,
+    avatar: c.avatar,
+    content: c.content,
+    emoji: c.emoji,
+    createdAt: c.createdAt,
+    parentId: c.parentId,
+    replies,
   })
-  form.value = { nickname: '', content: '', emoji: '😊' }
+
+  const hasNested = list.some((c) => Array.isArray(c.replies) && c.replies.length > 0)
+  if (hasNested) {
+    return list.map((c) => toEntry(c, (c.replies || []).map((r) => toEntry(r))))
+  }
+
+  const roots = list.filter((c) => c.parentId === null || c.parentId === undefined)
+  return roots.map((root) =>
+    toEntry(root, list.filter((c) => c.parentId === root.id).map((r) => toEntry(r)))
+  )
 }
 
-function submitReply(parentId: number) {
-  if (!replyContent.value.trim()) return
-  const entry = entries.value.find(e => e.id === parentId)
-  if (entry) {
-    entry.replies.push({
-      id: Date.now(),
+const { data: entries, loading, error, reload } = useAsyncData<GuestbookEntry[]>(
+  () => api.getComments().then(buildTree),
+  []
+)
+
+async function submitComment() {
+  if (!form.value.content.trim() || submitting.value) return
+  submitting.value = true
+  try {
+    await api.createComment({
+      nickname: form.value.nickname || '匿名访客',
+      content: form.value.content,
+      emoji: form.value.emoji,
+      avatar: `https://api.dicebear.com/7.0/thumbs/svg?seed=${Date.now()}`,
+    })
+    form.value = { nickname: '', content: '', emoji: '😊' }
+    await reload()
+  } catch (e) {
+    alert(e instanceof Error ? e.message : '留言失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function submitReply(parentId: number) {
+  if (!replyContent.value.trim() || submitting.value) return
+  submitting.value = true
+  try {
+    await api.createComment({
       nickname: '小橘子',
       avatar: 'https://api.dicebear.com/7.0/thumbs/svg?seed=orange',
       content: replyContent.value,
       emoji: '',
-      createdAt: new Date().toLocaleString(),
       parentId,
-      replies: []
     })
+    replyContent.value = ''
+    replyTo.value = null
+    await reload()
+  } catch (e) {
+    alert(e instanceof Error ? e.message : '回复失败')
+  } finally {
+    submitting.value = false
   }
-  replyContent.value = ''
-  replyTo.value = null
 }
 </script>

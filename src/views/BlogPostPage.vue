@@ -1,5 +1,8 @@
 <template>
-  <div v-if="post">
+  <div v-if="loading" class="text-center py-12 text-[var(--color-text-muted)]">
+    <p>📡 正在加载文章…</p>
+  </div>
+  <div v-else-if="post">
     <router-link to="/blog" class="text-sm text-[var(--color-primary)] hover:underline mb-4 inline-block">← 返回博客</router-link>
     <article>
       <img :src="post.cover" :alt="post.title" class="w-full h-64 md:h-80 object-cover rounded-2xl mb-6" />
@@ -39,18 +42,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { articles } from '@/data/mock'
+import { api } from '@/api'
+import type { Article } from '@/types'
 
 const route = useRoute()
-const post = articles.find(a => a.slug === route.params.slug)
+const post = ref<Article | null>(null)
+const loading = ref(true)
+const error = ref('')
 const emojis = ['❤️', '🔥', '😂', '😮', '👍']
 const reactions = ref<Record<string, number>>({})
 
+// 文章详情从后端 /api/articles/{slug} 拉取（后端会同时累加阅读量）
+async function loadPost() {
+  loading.value = true
+  error.value = ''
+  try {
+    post.value = await api.getArticle(route.params.slug as string)
+  } catch (e) {
+    post.value = null
+    error.value = e instanceof Error ? e.message : '文章加载失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadPost)
+watch(() => route.params.slug, loadPost)
+
 const renderedContent = computed(() => {
-  if (!post) return ''
-  return post.content
+  if (!post.value) return ''
+  return (post.value.content || '')
     .replace(/^### (.+)$/gm, '<h3 class="text-xl font-bold mt-6 mb-3">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 class="text-2xl font-bold mt-8 mb-4">$1</h2>')
     .replace(/^# (.+)$/gm, '<h1 class="text-3xl font-bold mt-8 mb-4">$1</h1>')

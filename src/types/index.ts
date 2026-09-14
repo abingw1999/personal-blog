@@ -120,3 +120,18 @@ export interface SiteConfig {
   siteStartDate: string
   shopEnabled: boolean
 }
+
+/** 评论/留言（对应后端 Comment 实体） */
+export interface Comment {
+  id: number
+  nickname: string
+  avatar: string
+  content: string
+  emoji: string
+  parentId: number | null
+  approved: boolean
+  ip?: string
+  createdAt: string
+  /** 后端 /api/comments 已经把子回复内嵌在主留言上 */
+  replies?: Comment[]
+}

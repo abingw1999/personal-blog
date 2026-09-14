@@ -33,7 +33,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { timeline } from '@/data/mock'
+import { api, useAsyncData } from '@/api'
+import type { TimelineItem } from '@/types'
 
 const selectedType = ref('all')
 const types = [
@@ -61,8 +62,31 @@ const typeDotColors: Record<string, string> = {
   project: 'bg-purple-500'
 }
 
+// 后端没有独立的 timeline 接口，这里用「文章 + 收藏」两份数据在本地聚合成时间轴
+const { data: timeline } = useAsyncData<TimelineItem[]>(async () => {
+  const [articles, collections] = await Promise.all([api.getArticles({ size: 100 }), api.getCollections()])
+
+  const fromArticles: TimelineItem[] = (articles.list || []).map((a) => ({
+    id: 100000 + a.id,
+    date: a.createdAt,
+    title: a.title,
+    content: a.excerpt,
+    type: 'article'
+  }))
+
+  const fromCollections: TimelineItem[] = (collections || []).map((c) => ({
+    id: 200000 + c.id,
+    date: c.completedAt || '',
+    title: c.title,
+    content: c.comment,
+    type: 'collection'
+  }))
+
+  return [...fromArticles, ...fromCollections].sort((a, b) => (a.date < b.date ? 1 : -1))
+}, [])
+
 const filteredTimeline = computed(() => {
-  if (selectedType.value === 'all') return timeline
-  return timeline.filter(item => item.type === selectedType.value)
+  if (selectedType.value === 'all') return timeline.value
+  return timeline.value.filter(item => item.type === selectedType.value)
 })
 </script>

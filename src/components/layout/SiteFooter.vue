@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { siteConfig } from '@/data/mock'
+import { siteConfig } from '@/config/site'
 
 const quickLinks = [
   { name: '博客', path: '/blog' },

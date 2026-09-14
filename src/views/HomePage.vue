@@ -25,6 +25,9 @@
       </div>
     </section>
 
+    <!-- 加载中 -->
+    <div v-if="loading" class="text-center py-8 text-sm text-[var(--color-text-muted)]">📡 正在加载文章…</div>
+
     <!-- Featured Articles -->
     <section class="mb-12">
       <div class="flex items-center justify-between mb-6">
@@ -85,10 +88,21 @@
 </template>
 
 <script setup lang="ts">
-import { siteConfig, articles } from '@/data/mock'
+import { computed } from 'vue'
+import { siteConfig } from '@/config/site'
+import { api, useAsyncData } from '@/api'
+import type { Article } from '@/types'
+
 const config = siteConfig
-const featuredPosts = articles.filter(a => a.featured).slice(0, 3)
-const latestPosts = articles.slice(0, 5)
+
+// 文章改为从后端 /api/articles 拉取（原来是本地 mock）
+const { data: articles, loading } = useAsyncData<Article[]>(
+  () => api.getArticles({ page: 1, size: 100 }).then((r) => r.list),
+  []
+)
+
+const featuredPosts = computed(() => articles.value.filter(a => a.featured).slice(0, 3))
+const latestPosts = computed(() => articles.value.slice(0, 5))
 const quickLinks = [
   { name: '留言板', path: '/guestbook', icon: '💬' },
   { name: '友链', path: '/friends', icon: '🔗' },

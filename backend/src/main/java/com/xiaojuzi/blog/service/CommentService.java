@@ -8,9 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * 评论服务
@@ -28,7 +30,7 @@ public class CommentService {
     private StringRedisTemplate redisTemplate;
     
     /**
-     * 获取所有评论（树形结构）
+     * 获取所有评论（树形结构：主留言 + 内嵌 replies）
      */
     public List<Comment> getComments() {
         // 获取所有顶级评论
@@ -38,18 +40,29 @@ public class CommentService {
                 .eq(Comment::getApproved, true)
                 .orderByDesc(Comment::getCreatedAt)
         );
-        
-        // 为每个顶级评论加载回复
-        for (Comment comment : topComments) {
-            List<Comment> replies = commentMapper.selectList(
-                new LambdaQueryWrapper<Comment>()
-                    .eq(Comment::getParentId, comment.getId())
-                    .eq(Comment::getApproved, true)
-                    .orderByAsc(Comment::getCreatedAt)
-            );
-            // 使用transient字段或DTO来避免序列化问题
+
+        // 正常情况下评论数量不多，一次把所有回复查出来再按 parentId 分组，
+        // 避免 N+1 查询。
+        List<Comment> allReplies = commentMapper.selectList(
+            new LambdaQueryWrapper<Comment>()
+                .isNotNull(Comment::getParentId)
+                .eq(Comment::getApproved, true)
+                .orderByAsc(Comment::getCreatedAt)
+        );
+
+        Map<Long, List<Comment>> repliesByParent = new HashMap<>();
+        for (Comment reply : allReplies) {
+            if (reply.getParentId() == null) {
+                continue;
+            }
+            repliesByParent.computeIfAbsent(reply.getParentId(), k -> new ArrayList<>()).add(reply);
         }
-        
+
+        // 为每个顶级评论挂上它的回复
+        for (Comment comment : topComments) {
+            comment.setReplies(repliesByParent.getOrDefault(comment.getId(), new ArrayList<>()));
+        }
+
         return topComments;
     }
     

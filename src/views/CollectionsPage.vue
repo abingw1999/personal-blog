@@ -42,7 +42,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { collections } from '@/data/mock'
+import { api, useAsyncData } from '@/api'
+import type { CollectionItem } from '@/types'
 
 const tabs = [
   { key: 'book', name: '书单', icon: '📖' },
@@ -53,12 +54,18 @@ const activeTab = ref('book')
 const statusFilter = ref('')
 const sortBy = ref('rating')
 
-const statuses = computed(() => [...new Set(collections.filter(c => c.type === activeTab.value).map(c => c.status))])
+// 收藏数据从后端 /api/collections 拉取
+const { data: collections, loading, error } = useAsyncData<CollectionItem[]>(
+  () => api.getCollections(),
+  []
+)
+
+const statuses = computed(() => [...new Set(collections.value.filter(c => c.type === activeTab.value).map(c => c.status))])
 
 const filteredItems = computed(() => {
-  let result = collections.filter(c => c.type === activeTab.value)
+  let result = collections.value.filter(c => c.type === activeTab.value)
   if (statusFilter.value) result = result.filter(c => c.status === statusFilter.value)
-  if (sortBy.value === 'rating') result.sort((a, b) => b.rating - a.rating)
+  if (sortBy.value === 'rating') result = [...result].sort((a, b) => b.rating - a.rating)
   return result
 })
 </script>

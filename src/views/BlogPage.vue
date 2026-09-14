@@ -34,7 +34,14 @@
         </div>
       </router-link>
     </div>
-    <div v-if="filteredPosts.length === 0" class="text-center py-12 text-[var(--color-text-muted)]">
+    <div v-if="loading" class="text-center py-12 text-[var(--color-text-muted)]">
+      <p>📡 正在加载文章…</p>
+    </div>
+    <div v-else-if="error" class="text-center py-12 text-[var(--color-text-muted)]">
+      <span class="text-4xl block mb-4">⚠️</span>
+      <p>{{ error }}</p>
+    </div>
+    <div v-else-if="filteredPosts.length === 0" class="text-center py-12 text-[var(--color-text-muted)]">
       <span class="text-4xl block mb-4">🔍</span>
       <p>没有找到匹配的文章</p>
     </div>
@@ -43,18 +50,41 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { articles } from '@/data/mock'
+import { api, useAsyncData } from '@/api'
+import type { Article } from '@/types'
 
 const selectedCategory = ref('全部')
 const searchQuery = ref('')
-const categories = ['全部', ...new Set(articles.map(a => a.category))]
+
+// 文章列表从后端 /api/articles 拉取
+const { data: articles, loading, error } = useAsyncData<Article[]>(
+  () => api.getArticles({ page: 1, size: 200 }).then((r) => r.list),
+  []
+)
+
+// 分类从后端 /api/articles/categories 取
+const { data: categories } = useAsyncData<string[]>(
+  async () => {
+    try {
+      const list = await api.getCategories()
+      return ['全部', ...list]
+    } catch {
+      return ['全部']
+    }
+  },
+  ['全部']
+)
 
 const filteredPosts = computed(() => {
-  let result = articles
+  let result = articles.value
   if (selectedCategory.value !== '全部') result = result.filter(a => a.category === selectedCategory.value)
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
-    result = result.filter(a => a.title.toLowerCase().includes(q) || a.excerpt.toLowerCase().includes(q) || a.tags.some(t => t.toLowerCase().includes(q)))
+    result = result.filter(a =>
+      (a.title || '').toLowerCase().includes(q) ||
+      (a.excerpt || '').toLowerCase().includes(q) ||
+      (a.tags || []).some(t => t.toLowerCase().includes(q))
+    )
   }
   return result
 })

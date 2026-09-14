@@ -202,3 +202,49 @@ INSERT INTO badges (name, icon, description, condition_desc, sort_order) VALUES
 ('阅读者', '📖', '阅读10篇文章', '阅读10篇文章', 3),
 ('社交达人', '🤝', '留言被回复5次', '留言被回复5次', 4),
 ('铁杆粉丝', '⭐', '连续访问7天', '连续访问7天', 5);
+
+-- 示例商品（橱窗默认关闭，可在 src/config/site.ts 里把 shopEnabled 改成 true 后展示）
+INSERT INTO products (name, description, price, image, link, category, recommended, enabled, sort_order) VALUES
+('机械键盘', '码字手感一流，青轴段落感强', 399.00, 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800', 'https://example.com/keyboard', '数码', TRUE, TRUE, 1),
+('护眼台灯', '无极调光，长时间看屏幕也不累', 199.00, 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800', 'https://example.com/lamp', '家居', TRUE, TRUE, 2),
+('手冲咖啡豆', '中浅烘，果酸明亮', 89.00, 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800', 'https://example.com/coffee', '食品', FALSE, TRUE, 3);
+
+-- 示例收藏（书单 / 影单 / 游戏单）
+INSERT INTO collections (type, title, cover, rating, status, comment, link, completed_at, sort_order) VALUES
+('book', '小王子', 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=800', 5, '已读完', '每次读都有新的感受，写给大人的童话。', 'https://example.com/book/little-prince', '2024-02-10', 1),
+('book', '人类简史', 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800', 4, '在读', '视角很宏大，读起来有点烧脑但很过瘾。', 'https://example.com/book/sapiens', NULL, 2),
+('book', '深度工作', 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=800', 4, '已读完', '关于专注力管理，实用性很强。', 'https://example.com/book/deep-work', '2024-01-20', 3),
+('movie', '千与千寻', 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800', 5, '已看完', '宫崎骏永远的神，画面和配乐都无可挑剔。', 'https://example.com/movie/spirited-away', '2024-03-02', 4),
+('movie', '你的名字', 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800', 4, '已看完', '画面绝美，结局有点意难平。', 'https://example.com/movie/your-name', '2024-02-25', 5),
+('game', '星露谷物语', 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800', 5, '在玩', '种田养老，治愈系天花板。', 'https://example.com/game/stardew', NULL, 6),
+('game', '空洞骑士', 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800', 5, '已通关', '难度高但设计极美，音乐封神。', 'https://example.com/game/hollow-knight', '2023-12-15', 7);
+
+-- 示例 Now 状态
+INSERT INTO now_status (category, icon, content, updated_at) VALUES
+('正在学习', '📚', 'Vue3 + TypeScript，顺便复习一下 Spring Boot 3', NOW()),
+('正在阅读', '📖', '《人类简史》读到一半', NOW()),
+('正在玩', '🎮', '星露谷物语第三年春天', NOW()),
+('正在听', '🎧', 'A Little Story - Valentin', NOW());
+
+-- 示例足迹
+INSERT INTO footprints (place, lat, lng, date, description, photo) VALUES
+('北京', 39.9042, 116.4074, '2023-05-01', '第一次去故宫，人真的超级多。', NULL),
+('上海', 31.2304, 121.4737, '2023-08-12', '外滩的夜景比照片里还好看。', NULL),
+('杭州', 30.2741, 120.1551, '2023-10-03', '在西湖边骑了一整天自行车。', NULL),
+('成都', 30.5728, 104.0668, '2024-01-15', '吃了三天火锅，回来胖了五斤。', NULL),
+('西安', 34.3416, 108.9398, '2024-04-05', '兵马俑确实震撼，肉夹馍也好吃。', NULL);
+
+-- 示例留言（含一条回复）
+INSERT INTO comments (nickname, avatar, content, emoji, parent_id, approved, ip) VALUES
+('小明', 'https://api.dicebear.com/7.0/thumbs/svg?seed=xiaoming', '网站做得很好看！请问博客系统是开源的吗？', '😊', NULL, TRUE, '127.0.0.1'),
+('小橘子', 'https://api.dicebear.com/7.0/thumbs/svg?seed=orange', '是开源的，源码在 GitHub 上，欢迎一起交流~', '🎉', 1, TRUE, '127.0.0.1'),
+('路人甲', 'https://api.dicebear.com/7.0/thumbs/svg?seed=passerby', 'Vue3 学习笔记写得很清楚，收藏了！', '👍', NULL, TRUE, '127.0.0.1');
+
+-- 示例更新日志
+INSERT INTO changelog (title, content, type, date) VALUES
+('网站正式上线', '完成了首页、博客、留言板等基础页面，欢迎大家来逛逛~', 'feature', '2024-01-01'),
+('新增收藏单页面', '加入了书单、影单、游戏单的展示。', 'feature', '2024-02-10'),
+('修复移动端导航栏错位', '小屏下导航栏会挡住内容，已修复。', 'fix', '2024-03-05'),
+('优化首页加载速度', '图片改为懒加载，首屏快了不少。', 'optimize', '2024-04-01'),
+('接入后端接口', '前端数据全部改为从 Spring Boot 接口获取，告别本地 mock 数据。', 'feature', '2024-05-20');
+

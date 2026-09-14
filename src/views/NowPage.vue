@@ -20,7 +20,17 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { nowStatuses } from '@/data/mock'
-const statuses = nowStatuses
-const latestUpdate = computed(() => statuses.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]?.updatedAt || '')
+import { api, useAsyncData } from '@/api'
+import type { NowStatus } from '@/types'
+
+// Now 状态从后端 /api/now-status 拉取
+const { data: statuses } = useAsyncData<NowStatus[]>(() => api.getNowStatus(), [])
+
+const latestUpdate = computed(() => {
+  // 复制再排序，避免直接改动源数组
+  const sorted = [...statuses.value].sort((a, b) =>
+    String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))
+  )
+  return sorted[0]?.updatedAt ? String(sorted[0].updatedAt).slice(0, 10) : ''
+})
 </script>

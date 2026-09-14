@@ -21,6 +21,16 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { badges } from '@/data/mock'
-const earnedCount = computed(() => badges.filter(b => b.earned).length)
+import { api, useAsyncData } from '@/api'
+import type { Badge } from '@/types'
+
+// 徽章定义从后端 /api/badges 拉取。
+// 注意：后端目前没有实现「访客徽章解锁」逻辑（visitor_badges 表还没有对应接口），
+// 所以 earned 一律按未解锁处理；等后端补上接口后再在这里接真实解锁状态。
+const { data: badges } = useAsyncData<Badge[]>(
+  () => api.getBadges().then(list => list.map(b => ({ ...b, earned: false }))),
+  []
+)
+
+const earnedCount = computed(() => badges.value.filter(b => b.earned).length)
 </script>

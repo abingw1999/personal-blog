@@ -36,9 +36,20 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { products, siteConfig } from '@/data/mock'
+import { siteConfig } from '@/config/site'
+import { api, useAsyncData } from '@/api'
+import type { Product } from '@/types'
+
 const shopEnabled = siteConfig.shopEnabled
 const selectedCategory = ref('全部')
-const categories = ['全部', ...new Set(products.map(p => p.category))]
-const filteredProducts = computed(() => selectedCategory.value === '全部' ? products : products.filter(p => p.category === selectedCategory.value))
+
+// 商品从后端 /api/products 拉取
+const { data: products } = useAsyncData<Product[]>(() => api.getProducts(), [])
+
+const categories = computed(() => ['全部', ...new Set(products.value.map(p => p.category))])
+const filteredProducts = computed(() =>
+  selectedCategory.value === '全部'
+    ? products.value
+    : products.value.filter(p => p.category === selectedCategory.value)
+)
 </script>

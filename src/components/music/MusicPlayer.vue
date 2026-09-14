@@ -47,7 +47,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { musicList } from '@/data/mock'
+import { api } from '@/api'
+import type { Music } from '@/types'
 
 const show = ref(true)
 const expanded = ref(true)
@@ -57,13 +58,24 @@ const currentTime = ref(0)
 const duration = ref(0)
 const volume = ref(0.5)
 const progress = ref(0)
+const musicList = ref<Music[]>([])
 
 let audio: HTMLAudioElement | null = null
 
-const currentTrack = computed(() => musicList[currentTrackIndex.value])
+const currentTrack = computed<Music>(
+  () => musicList.value[currentTrackIndex.value] || { id: 0, title: '暂无音乐', artist: '', url: '', cover: '' }
+)
 
-onMounted(() => {
-  audio = new Audio(musicList[0].url)
+onMounted(async () => {
+  try {
+    musicList.value = (await api.getMusic()) || []
+  } catch {
+    musicList.value = []
+  }
+
+  if (!musicList.value.length) return
+
+  audio = new Audio(musicList.value[0].url)
   audio.volume = volume.value
   audio.addEventListener('timeupdate', () => {
     if (audio) {
@@ -93,18 +105,20 @@ function togglePlay() {
 }
 
 function nextTrack() {
-  currentTrackIndex.value = (currentTrackIndex.value + 1) % musicList.length
+  if (!musicList.value.length) return
+  currentTrackIndex.value = (currentTrackIndex.value + 1) % musicList.value.length
   loadTrack()
 }
 
 function prevTrack() {
-  currentTrackIndex.value = (currentTrackIndex.value - 1 + musicList.length) % musicList.length
+  if (!musicList.value.length) return
+  currentTrackIndex.value = (currentTrackIndex.value - 1 + musicList.value.length) % musicList.value.length
   loadTrack()
 }
 
 function loadTrack() {
-  if (!audio) return
-  audio.src = musicList[currentTrackIndex.value].url
+  if (!audio || !musicList.value[currentTrackIndex.value]) return
+  audio.src = musicList.value[currentTrackIndex.value].url
   audio.play().catch(() => {})
   isPlaying.value = true
 }

@@ -21,12 +21,20 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { articles } from '@/data/mock'
+import { api } from '@/api'
 
 const router = useRouter()
 
-function randomPost() {
-  const randomIndex = Math.floor(Math.random() * articles.length)
-  router.push(`/blog/${articles[randomIndex].slug}`)
+async function randomPost() {
+  try {
+    const article = await api.getRandomArticle()
+    if (article?.slug) {
+      router.push(`/blog/${article.slug}`)
+    } else {
+      router.push('/blog')
+    }
+  } catch {
+    router.push('/blog')
+  }
 }
 </script>

@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { siteConfig } from '@/data/mock'
+import { siteConfig } from '@/config/site'
 const config = siteConfig
 
 const achievements = ref([
